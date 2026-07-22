@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="Markiere alle besuchten deutschen Städte ab 50.000 Einwohnern.">
+  <title>Städtetracker</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">VERSION 0.5 · 195 STÄDTE</p>
+        <h1>Städtetracker</h1>
+      </div>
+      <button class="icon-button" id="rulesButton" aria-label="Besuchsregel anzeigen" title="Was zählt als besucht?">i</button>
+    </header>
+
+    <main>
+      <section class="view active" id="overviewView" aria-labelledby="overviewTitle">
+        <div class="hero-card">
+          <div class="hero-copy">
+            <p class="section-kicker">Deutschland</p>
+            <h2 id="overviewTitle"><span id="visitedCount">0</span> von <span id="totalCount">0</span> Städten</h2>
+            <p class="muted"><span id="overallPercent">0</span> % besucht</p>
+          </div>
+          <div class="ring" id="progressRing" aria-label="Gesamtfortschritt">
+            <span id="ringPercent">0%</span>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <article class="summary-card">
+            <p>Großstädte</p>
+            <strong id="metroSummary">0 / 0</strong>
+            <small>ab 100.000 Einwohnern</small>
+          </article>
+          <article class="summary-card">
+            <p>Große Mittelstädte</p>
+            <strong id="midSummary">0 / 0</strong>
+            <small>50.000–99.999 Einwohner</small>
+          </article>
+        </div>
+
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Fortschritt</p>
+              <h3>Nach Bundesland</h3>
+            </div>
+            <button class="text-button" data-nav-target="citiesView">Alle Städte</button>
+          </div>
+          <div id="stateProgressList" class="state-list"></div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Als Nächstes</p>
+              <h3>Größte offene Städte</h3>
+            </div>
+          </div>
+          <div id="nextCities" class="city-stack"></div>
+        </section>
+      </section>
+
+      <section class="view" id="citiesView" aria-labelledby="citiesTitle">
+        <div class="section-heading sticky-heading">
+          <div>
+            <p class="section-kicker">Deutschland · Stand 31.12.2025</p>
+            <h2 id="citiesTitle">Städte</h2>
+          </div>
+          <span class="result-count" id="resultCount">0</span>
+        </div>
+
+        <div class="controls-card">
+          <label class="search-field">
+            <span class="sr-only">Stadt suchen</span>
+            <input id="searchInput" type="search" placeholder="Stadt suchen …" autocomplete="off">
+          </label>
+
+          <div class="segmented-control" aria-label="Besuchsstatus filtern">
+            <button class="segment active" data-status="all">Alle</button>
+            <button class="segment" data-status="visited">Besucht</button>
+            <button class="segment" data-status="open">Offen</button>
+          </div>
+
+          <div class="filter-grid">
+            <label>
+              <span>Bundesland</span>
+              <select id="stateFilter">
+                <option value="all">Alle Bundesländer</option>
+              </select>
+            </label>
+            <label>
+              <span>Kategorie</span>
+              <select id="categoryFilter">
+                <option value="all">Alle Kategorien</option>
+                <option value="metro">Großstädte</option>
+                <option value="mid">Große Mittelstädte</option>
+              </select>
+            </label>
+            <label>
+              <span>Sortierung</span>
+              <select id="sortSelect">
+                <option value="name">Alphabetisch</option>
+                <option value="population" selected>Größe</option>
+                <option value="state">Bundesland</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div id="cityList" class="city-list"></div>
+        <div id="emptyState" class="empty-state hidden">
+          <strong>Keine Stadt gefunden</strong>
+          <p>Ändere die Suche oder deine Filter.</p>
+        </div>
+      </section>
+
+
+      <section class="view" id="mapView" aria-labelledby="mapTitle">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Deutschland</p>
+            <h2 id="mapTitle">Karte</h2>
+          </div>
+          <span class="result-count" id="mapVisitedCount">0 / 195</span>
+        </div>
+
+        <div class="map-legend" aria-label="Kartenlegende">
+          <span><i class="legend-dot visited"></i> Besucht</span>
+          <span><i class="legend-dot open"></i> Noch offen</span>
+          <span><i class="legend-dot capital"></i> Landeshauptstadt</span>
+        </div>
+
+        <div class="map-card">
+          <svg id="germanyMap" class="germany-map" viewBox="0 0 520 680" role="img" aria-label="Deutschlandkarte mit allen Städten ab 50.000 Einwohnern">
+            <path class="map-country" d="M 438.09 128.73 L 449.58 169.19 L 435.87 190.42 L 453.73 218.76 L 465.90 261.29 L 462.07 288.70 L 482.24 339.47 L 460.28 347.77 L 447.31 338.63 L 434.97 353.76 L 399.64 369.16 L 381.37 388.97 L 345.61 406.29 L 354.23 429.92 L 359.43 463.45 L 384.54 482.56 L 412.32 516.74 L 394.97 553.40 L 377.30 563.50 L 384.27 615.30 L 379.69 628.82 L 364.34 612.54 L 340.75 610.10 L 305.58 624.35 L 262.19 620.96 L 255.18 641.95 L 230.29 619.87 L 215.44 624.25 L 162.71 599.94 L 152.61 617.21 L 110.76 616.66 L 117.01 560.01 L 141.88 505.56 L 70.98 490.92 L 47.77 470.10 L 50.54 435.24 L 40.72 417.28 L 46.31 363.56 L 38.04 280.24 L 67.60 280.20 L 80.07 250.28 L 92.33 177.47 L 83.13 150.59 L 92.74 133.75 L 133.86 129.43 L 142.99 146.96 L 176.40 107.76 L 165.15 77.96 L 162.89 32.86 L 200.08 43.35 L 231.56 31.25 L 232.43 61.97 L 282.15 80.50 L 281.62 108.72 L 331.65 93.79 L 359.31 72.01 L 414.86 103.41 L 438.09 128.73 Z"></path>
+            <g id="mapCities"></g>
+          </svg>
+        </div>
+        <p class="map-help">Tippe auf einen Punkt, um die Stadt zu öffnen und den Erstbesuch einzutragen.</p>
+        <p class="data-credit">Kartengrundlage: Natural Earth · Koordinaten: GeoNames</p>
+      </section>
+
+      <section class="view" id="statsView" aria-labelledby="statsTitle">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Auswertung</p>
+            <h2 id="statsTitle">Statistik</h2>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span>Besucht</span>
+            <strong id="statsVisited">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Noch offen</span>
+            <strong id="statsOpen">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Bestes Flächenland</span>
+            <strong id="bestState">–</strong>
+          </article>
+          <article class="stat-card">
+            <span>Großstadt-Quote</span>
+            <strong id="metroPercent">0 %</strong>
+          </article>
+          <article class="stat-card">
+            <span>Bundesländer erreicht</span>
+            <strong id="statesReached">0 / 16 · 0 %</strong>
+            <small>Mindestens eine Stadt besucht</small>
+          </article>
+          <article class="stat-card">
+            <span>Landeshauptstädte</span>
+            <strong id="capitalStats">0 / 16 · 0 %</strong>
+            <small>Alle 16 Landeshauptstädte</small>
+          </article>
+        </div>
+
+
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Meilensteine</p>
+              <h3>Abzeichen</h3>
+            </div>
+            <span class="result-count" id="badgeCount">0 / 10</span>
+          </div>
+          <div id="badgeGrid" class="badge-grid"></div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Rangliste</p>
+              <h3>Bundesländer</h3>
+            </div>
+          </div>
+          <div id="stateRanking" class="ranking-list"></div>
+        </section>
+
+        <section class="section-block danger-zone">
+          <h3>Testdaten zurücksetzen</h3>
+          <p>Entfernt alle Markierungen nur auf diesem Gerät.</p>
+          <button class="secondary-button" id="resetButton">Alle Besuche löschen</button>
+        </section>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Hauptnavigation">
+      <button class="nav-item active" data-view="overviewView">
+        <span class="nav-icon">⌂</span>
+        <span>Übersicht</span>
+      </button>
+      <button class="nav-item" data-view="citiesView">
+        <span class="nav-icon">◎</span>
+        <span>Städte</span>
+      </button>
+      <button class="nav-item" data-view="mapView">
+        <span class="nav-icon">◇</span>
+        <span>Karte</span>
+      </button>
+      <button class="nav-item" data-view="statsView">
+        <span class="nav-icon">▥</span>
+        <span>Statistik</span>
+      </button>
+    </nav>
+  </div>
+
+  <dialog id="rulesDialog">
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-header">
+        <div>
+          <p class="section-kicker">Besuchsregel</p>
+          <h2>Wann zählt eine Stadt?</h2>
+        </div>
+        <button class="icon-button" value="close" aria-label="Schließen">×</button>
+      </div>
+      <p>Eine Stadt gilt als besucht, wenn du dich dort persönlich zumindest kurz außerhalb eines Fahrzeugs aufgehalten hast.</p>
+      <div class="rule-grid">
+        <div class="rule yes"><strong>Zählt</strong><span>Du warst draußen in der Stadt.</span></div>
+        <div class="rule no"><strong>Zählt nicht</strong><span>Nur durchgefahren, umgestiegen oder ausschließlich im Bahnhof beziehungsweise Flughafen geblieben.</span></div>
+      </div>
+      <button class="primary-button" value="close">Verstanden</button>
+    </form>
+  </dialog>
+
+
+  <dialog id="cityDialog">
+    <form class="dialog-card" id="cityDetailForm">
+      <div class="dialog-header">
+        <div>
+          <p class="section-kicker" id="detailState">Bundesland</p>
+          <h2 id="detailCityName">Stadt</h2>
+        </div>
+        <button type="button" class="icon-button" id="closeCityDialog" aria-label="Schließen">×</button>
+      </div>
+      <p class="detail-meta" id="detailMeta"></p>
+
+      <div class="detail-status" id="detailStatus"></div>
+
+      <label class="date-field" for="firstVisitDate">
+        <span>Erstes Besuchsdatum <small>(optional)</small></span>
+        <input type="date" id="firstVisitDate">
+      </label>
+      <p class="date-hint">Du kannst das genaue Datum eintragen oder das Feld leer lassen.</p>
+
+      <div class="dialog-actions">
+        <button type="button" class="secondary-button" id="detailVisitButton">Als besucht markieren</button>
+        <button type="submit" class="primary-button">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
+
+  <dialog id="badgeDialog" class="badge-dialog">
+    <div class="dialog-card badge-dialog-card">
+      <div class="dialog-header">
+        <div class="badge-dialog-heading">
+          <div class="badge-icon" id="badgeDetailIcon">1</div>
+          <div>
+            <p class="section-kicker">Abzeichen</p>
+            <h2 id="badgeDetailTitle">Abzeichen</h2>
+          </div>
+        </div>
+        <button type="button" class="icon-button" id="closeBadgeDialog" aria-label="Schließen">×</button>
+      </div>
+
+      <p class="detail-meta" id="badgeDetailDescription"></p>
+      <div class="badge-detail-progress">
+        <div class="badge-detail-progress-header">
+          <strong id="badgeDetailProgressText">0 / 0</strong>
+          <span id="badgeDetailPercent">0 %</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="badgeDetailProgressBar"></div>
+        </div>
+      </div>
+
+      <div class="badge-detail-sections">
+        <section>
+          <div class="badge-list-heading">
+            <h3 id="badgeDoneTitle">Erledigt</h3>
+            <span class="result-count" id="badgeDoneCount">0</span>
+          </div>
+          <div id="badgeDoneList" class="badge-detail-list"></div>
+        </section>
+
+        <section>
+          <div class="badge-list-heading">
+            <h3 id="badgeMissingTitle">Fehlt noch</h3>
+            <span class="result-count" id="badgeMissingCount">0</span>
+          </div>
+          <div id="badgeMissingList" class="badge-detail-list"></div>
+        </section>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
