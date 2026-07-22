@@ -132,6 +132,7 @@ function toggleVisited(id) {
   }
   saveData();
   renderAll();
+  syncCityToCloud(id);
 }
 
 function renderOverview() {
@@ -568,15 +569,198 @@ els.cityDetailForm.addEventListener("submit",event=>{
   if (value && value > new Date().toISOString().slice(0,10)) { alert("Das Erstbesuchsdatum kann nicht in der Zukunft liegen."); return; }
   if (value) { visited.add(activeDetailCityId); visitDetails[activeDetailCityId]={firstVisit:value}; }
   else if (visited.has(activeDetailCityId)) { delete visitDetails[activeDetailCityId]; }
-  saveData(); renderAll(); closeCityDetail();
+  saveData(); renderAll(); syncCityToCloud(activeDetailCityId); closeCityDetail();
 });
 
 document.querySelector("#resetButton").addEventListener("click",()=>{
   const confirmed=window.confirm("Wirklich alle besuchten Städte und Erstbesuchsdaten löschen?");
   if (!confirmed) return;
-  visited.clear(); visitDetails={}; saveData(); renderAll();
+  visited.clear(); visitDetails={}; saveData(); renderAll(); clearCloudVisits();
 });
 
 els.firstVisitDate.max=new Date().toISOString().slice(0,10);
 populateStateFilter(); renderAll();
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+// Cloud, accounts and friends (Supabase)
+const SUPABASE_URL = "https://yxgjxmzlsbazkxrywojy.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_cGd4ffADOCFMI1DixWg4TA_-j407jmF";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let cloudUser = null;
+let registering = false;
+
+const accountEls = {
+  dialog: document.querySelector("#accountDialog"), button: document.querySelector("#accountButton"),
+  close: document.querySelector("#closeAccountDialog"), title: document.querySelector("#accountTitle"),
+  authPanel: document.querySelector("#authPanel"), accountPanel: document.querySelector("#accountPanel"),
+  form: document.querySelector("#authForm"), email: document.querySelector("#authEmail"),
+  password: document.querySelector("#authPassword"), username: document.querySelector("#authUsername"),
+  signupNameField: document.querySelector("#signupNameField"), hint: document.querySelector("#authHint"),
+  submit: document.querySelector("#authSubmitButton"), mode: document.querySelector("#authModeButton"),
+  accountName: document.querySelector("#accountName"), friendForm: document.querySelector("#friendForm"),
+  friendUsername: document.querySelector("#friendUsername"), friendHint: document.querySelector("#friendHint"),
+  friendList: document.querySelector("#friendList"), leaderboard: document.querySelector("#leaderboardList"),
+  signOut: document.querySelector("#signOutButton")
+};
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" })[char]);
+}
+
+function cloudError(error, fallback = "Das hat gerade nicht funktioniert.") {
+  console.error(error);
+  return error?.message || fallback;
+}
+
+function renderAuthState() {
+  const signedIn = Boolean(cloudUser);
+  accountEls.button.textContent = signedIn ? "Freunde" : "Anmelden";
+  accountEls.authPanel.classList.toggle("hidden", signedIn);
+  accountEls.accountPanel.classList.toggle("hidden", !signedIn);
+  accountEls.title.textContent = signedIn ? "Dein Konto" : (registering ? "Konto erstellen" : "Anmelden");
+  accountEls.signupNameField.classList.toggle("hidden", !registering);
+  accountEls.username.required = registering;
+  accountEls.submit.textContent = registering ? "Konto erstellen" : "Anmelden";
+  accountEls.mode.textContent = registering ? "Ich habe schon ein Konto" : "Konto erstellen";
+  accountEls.hint.textContent = registering
+    ? "Nach der Registrierung bestätigst du gegebenenfalls deine E-Mail."
+    : "Noch kein Konto? Erstelle eins kostenlos.";
+  if (signedIn) accountEls.accountName.textContent = cloudUser.user_metadata?.username || cloudUser.email;
+}
+
+async function ensureProfile() {
+  if (!cloudUser) return;
+  const { data: profile, error: lookupError } = await supabaseClient.from("profiles").select("id").eq("id", cloudUser.id).maybeSingle();
+  if (lookupError || profile) return;
+  const metadata = cloudUser.user_metadata || {};
+  const username = String(metadata.username || cloudUser.email.split("@")[0]).toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 24);
+  const { error } = await supabaseClient.from("profiles").insert({ id: cloudUser.id, username, display_name: metadata.display_name || username });
+  if (error) alert(`Profil konnte nicht angelegt werden: ${cloudError(error)}`);
+}
+
+async function syncCloudProgress() {
+  if (!cloudUser) return;
+  const localVisits = cities.filter(city => visited.has(city.id)).map(city => ({
+    user_id: cloudUser.id, city_id: city.id, first_visit: visitDetails[city.id]?.firstVisit || null
+  }));
+  if (localVisits.length) {
+    const { error } = await supabaseClient.from("visits").upsert(localVisits, { onConflict: "user_id,city_id" });
+    if (error) console.error("Cloud sync failed", error);
+  }
+  const { data, error } = await supabaseClient.from("visits").select("city_id, first_visit").eq("user_id", cloudUser.id);
+  if (error) return console.error("Cloud read failed", error);
+  const validIds = new Set(cities.map(city => city.id));
+  data.forEach(row => {
+    if (!validIds.has(row.city_id)) return;
+    visited.add(row.city_id);
+    if (row.first_visit) visitDetails[row.city_id] = { firstVisit: row.first_visit };
+  });
+  saveData(); renderAll();
+}
+
+async function syncCityToCloud(cityId) {
+  if (!cloudUser) return;
+  if (visited.has(cityId)) {
+    const { error } = await supabaseClient.from("visits").upsert({
+      user_id: cloudUser.id, city_id: cityId, first_visit: visitDetails[cityId]?.firstVisit || null
+    }, { onConflict: "user_id,city_id" });
+    if (error) console.error("Cloud update failed", error);
+  } else {
+    const { error } = await supabaseClient.from("visits").delete().eq("user_id", cloudUser.id).eq("city_id", cityId);
+    if (error) console.error("Cloud delete failed", error);
+  }
+  loadLeaderboard();
+}
+
+async function clearCloudVisits() {
+  if (!cloudUser) return;
+  const { error } = await supabaseClient.from("visits").delete().eq("user_id", cloudUser.id);
+  if (error) console.error("Cloud reset failed", error);
+  loadLeaderboard();
+}
+
+async function loadFriends() {
+  if (!cloudUser) return;
+  const { data: friendships, error } = await supabaseClient.from("friendships").select("id, requester_id, addressee_id, status");
+  if (error) { accountEls.friendList.textContent = cloudError(error); return; }
+  if (!friendships.length) { accountEls.friendList.innerHTML = '<p class="form-hint">Noch keine Freunde hinzugefügt.</p>'; return; }
+  const ids = [...new Set(friendships.flatMap(item => [item.requester_id, item.addressee_id]))];
+  const { data: profiles } = await supabaseClient.from("profiles").select("id, username, display_name").in("id", ids);
+  const people = new Map((profiles || []).map(profile => [profile.id, profile]));
+  accountEls.friendList.innerHTML = friendships.map(friendship => {
+    const incoming = friendship.addressee_id === cloudUser.id;
+    const other = people.get(incoming ? friendship.requester_id : friendship.addressee_id);
+    const name = escapeHtml(other?.display_name || other?.username || "Unbekannt");
+    const status = friendship.status === "accepted" ? "Freund" : incoming ? "Anfrage erhalten" : "Anfrage gesendet";
+    const action = incoming && friendship.status === "pending" ? `<button class="secondary-button friend-accept" data-friend-id="${friendship.id}">Annehmen</button>` : "";
+    return `<div class="account-row"><span><strong>${name}</strong><small>${status}</small></span>${action}</div>`;
+  }).join("");
+}
+
+async function loadLeaderboard() {
+  if (!cloudUser) return;
+  const { data, error } = await supabaseClient.rpc("leaderboard");
+  if (error) {
+    accountEls.leaderboard.innerHTML = '<p class="form-hint">Die Rangliste wird gerade eingerichtet.</p>';
+    return;
+  }
+  accountEls.leaderboard.innerHTML = data.length ? data.map((row, index) =>
+    `<div class="account-row"><span><strong>${index + 1}. ${escapeHtml(row.display_name || row.username)}</strong><small>${row.visited_count} Städte</small></span></div>`
+  ).join("") : '<p class="form-hint">Noch keine Einträge.</p>';
+}
+
+async function openAccountDialog() {
+  renderAuthState();
+  accountEls.dialog.showModal();
+  if (cloudUser) { await loadFriends(); await loadLeaderboard(); }
+}
+
+accountEls.button.addEventListener("click", openAccountDialog);
+accountEls.close.addEventListener("click", () => accountEls.dialog.close());
+accountEls.mode.addEventListener("click", () => { registering = !registering; renderAuthState(); });
+accountEls.form.addEventListener("submit", async event => {
+  event.preventDefault();
+  const email = accountEls.email.value.trim();
+  const password = accountEls.password.value;
+  accountEls.submit.disabled = true;
+  if (registering) {
+    const username = accountEls.username.value.trim().toLowerCase();
+    const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.href, data: { username, display_name: username } } });
+    accountEls.submit.disabled = false;
+    if (error) return alert(cloudError(error));
+    if (!data.session) alert("Konto erstellt. Bitte bestätige jetzt die E-Mail und melde dich danach an.");
+  } else {
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    accountEls.submit.disabled = false;
+    if (error) return alert(cloudError(error));
+  }
+});
+accountEls.friendForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  const username = accountEls.friendUsername.value.trim().toLowerCase();
+  accountEls.friendHint.textContent = "";
+  const { data: person, error } = await supabaseClient.from("profiles").select("id, username").eq("username", username).maybeSingle();
+  if (error || !person) { accountEls.friendHint.textContent = "Nutzername nicht gefunden."; return; }
+  if (person.id === cloudUser.id) { accountEls.friendHint.textContent = "Das bist du selbst."; return; }
+  const { error: requestError } = await supabaseClient.from("friendships").insert({ requester_id: cloudUser.id, addressee_id: person.id });
+  accountEls.friendHint.textContent = requestError ? cloudError(requestError) : "Freundschaftsanfrage gesendet.";
+  if (!requestError) { accountEls.friendUsername.value = ""; loadFriends(); }
+});
+accountEls.friendList.addEventListener("click", async event => {
+  const button = event.target.closest(".friend-accept");
+  if (!button) return;
+  const { error } = await supabaseClient.from("friendships").update({ status: "accepted" }).eq("id", button.dataset.friendId);
+  if (error) alert(cloudError(error)); else loadFriends();
+});
+accountEls.signOut.addEventListener("click", async () => { await supabaseClient.auth.signOut(); accountEls.dialog.close(); });
+
+supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+  cloudUser = session?.user || null;
+  if (cloudUser) { await ensureProfile(); await syncCloudProgress(); }
+  renderAuthState();
+});
+supabaseClient.auth.getSession().then(({ data }) => {
+  cloudUser = data.session?.user || null;
+  renderAuthState();
+  if (cloudUser) ensureProfile().then(syncCloudProgress);
+});

@@ -1,13 +1,13 @@
-# Städtetracker – Version 0.6
+# Städtetracker – Version 0.7
 
 Kostenlose lokale Web-App für alle deutschen Städte ab 20.000 Einwohnern.
 
-## Neu in Version 0.6
+## Neu in Version 0.7
 
+- Benutzerkonten mit Cloud-Synchronisierung
+- Freundschaftsanfragen und Freundesliste
+- Rangliste für angemeldete Nutzer
 - vollständige Städteliste aus der Destatis-Datei, gefiltert auf mindestens 20.000 Einwohner
-- neue Kategorie: Kleinstädte (20.000–49.999 Einwohner)
-- Karte bleibt stabil, auch wenn für neue Städte noch keine Koordinaten hinterlegt sind
-- vorhandene Besuchsmarkierungen der bisherigen Städte bleiben erhalten
 
 ## Daten
 

@@ -15,10 +15,13 @@
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">VERSION 0.6 · STÄDTE AB 20.000 EINWOHNERN</p>
+        <p class="eyebrow">VERSION 0.7 · MIT FREUNDEN</p>
         <h1>Städtetracker</h1>
       </div>
-      <button class="icon-button" id="rulesButton" aria-label="Besuchsregel anzeigen" title="Was zählt als besucht?">i</button>
+      <div class="topbar-actions">
+        <button class="account-button" id="accountButton">Anmelden</button>
+        <button class="icon-button" id="rulesButton" aria-label="Besuchsregel anzeigen" title="Was zählt als besucht?">i</button>
+      </div>
     </header>
 
     <main>
@@ -332,6 +335,51 @@
     </div>
   </dialog>
 
+  <dialog id="accountDialog" class="account-dialog">
+    <div class="dialog-card account-dialog-card">
+      <div class="dialog-header">
+        <div>
+          <p class="section-kicker">Cloud &amp; Freunde</p>
+          <h2 id="accountTitle">Anmelden</h2>
+        </div>
+        <button type="button" class="icon-button" id="closeAccountDialog" aria-label="Schließen">×</button>
+      </div>
+
+      <div id="authPanel">
+        <p class="detail-meta">Melde dich an, damit dein Fortschritt gesichert wird und du Freunde hinzufügen kannst.</p>
+        <form id="authForm" class="account-form">
+          <label><span>E-Mail</span><input id="authEmail" type="email" autocomplete="email" required></label>
+          <label><span>Passwort</span><input id="authPassword" type="password" minlength="6" autocomplete="current-password" required></label>
+          <label id="signupNameField"><span>Dein Nutzername</span><input id="authUsername" type="text" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" placeholder="z. B. dominik" autocomplete="username"></label>
+          <p class="form-hint" id="authHint">Noch kein Konto? Wähle „Konto erstellen“.</p>
+          <div class="dialog-actions">
+            <button class="secondary-button" type="button" id="authModeButton">Konto erstellen</button>
+            <button class="primary-button" type="submit" id="authSubmitButton">Anmelden</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="accountPanel" class="hidden">
+        <p class="detail-meta">Angemeldet als <strong id="accountName"></strong>. Dein Fortschritt wird automatisch mit der Cloud abgeglichen.</p>
+        <section class="account-section">
+          <div class="section-heading"><h3>Freund hinzufügen</h3></div>
+          <form id="friendForm" class="inline-form"><input id="friendUsername" type="text" placeholder="Nutzername" required><button class="primary-button" type="submit">Senden</button></form>
+          <p class="form-hint" id="friendHint"></p>
+        </section>
+        <section class="account-section">
+          <div class="section-heading"><h3>Deine Freunde</h3></div>
+          <div id="friendList" class="account-list"></div>
+        </section>
+        <section class="account-section">
+          <div class="section-heading"><h3>Rangliste</h3></div>
+          <div id="leaderboardList" class="account-list"></div>
+        </section>
+        <button class="secondary-button" id="signOutButton" type="button">Abmelden</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>
