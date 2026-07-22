@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111827">
-  <meta name="description" content="Markiere alle besuchten deutschen Städte ab 50.000 Einwohnern.">
+  <meta name="description" content="Markiere alle besuchten deutschen Städte ab 20.000 Einwohnern.">
   <title>Städtetracker</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
@@ -15,7 +15,7 @@
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">VERSION 0.5 · 195 STÄDTE</p>
+        <p class="eyebrow">VERSION 0.6 · STÄDTE AB 20.000 EINWOHNERN</p>
         <h1>Städtetracker</h1>
       </div>
       <button class="icon-button" id="rulesButton" aria-label="Besuchsregel anzeigen" title="Was zählt als besucht?">i</button>
@@ -41,9 +41,14 @@
             <small>ab 100.000 Einwohnern</small>
           </article>
           <article class="summary-card">
-            <p>Große Mittelstädte</p>
+            <p>Mittelstädte</p>
             <strong id="midSummary">0 / 0</strong>
             <small>50.000–99.999 Einwohner</small>
+          </article>
+          <article class="summary-card">
+            <p>Kleinstädte</p>
+            <strong id="smallSummary">0 / 0</strong>
+            <small>20.000–49.999 Einwohner</small>
           </article>
         </div>
 
@@ -72,7 +77,7 @@
       <section class="view" id="citiesView" aria-labelledby="citiesTitle">
         <div class="section-heading sticky-heading">
           <div>
-            <p class="section-kicker">Deutschland · Stand 31.12.2025</p>
+            <p class="section-kicker">Deutschland · Stand 31.12.2024</p>
             <h2 id="citiesTitle">Städte</h2>
           </div>
           <span class="result-count" id="resultCount">0</span>
@@ -102,7 +107,8 @@
               <select id="categoryFilter">
                 <option value="all">Alle Kategorien</option>
                 <option value="metro">Großstädte</option>
-                <option value="mid">Große Mittelstädte</option>
+                <option value="mid">Mittelstädte</option>
+                <option value="small">Kleinstädte</option>
               </select>
             </label>
             <label>
@@ -130,7 +136,7 @@
             <p class="section-kicker">Deutschland</p>
             <h2 id="mapTitle">Karte</h2>
           </div>
-          <span class="result-count" id="mapVisitedCount">0 / 195</span>
+          <span class="result-count" id="mapVisitedCount">0 / 0</span>
         </div>
 
         <div class="map-legend" aria-label="Kartenlegende">
@@ -140,12 +146,12 @@
         </div>
 
         <div class="map-card">
-          <svg id="germanyMap" class="germany-map" viewBox="0 0 520 680" role="img" aria-label="Deutschlandkarte mit allen Städten ab 50.000 Einwohnern">
+          <svg id="germanyMap" class="germany-map" viewBox="0 0 520 680" role="img" aria-label="Deutschlandkarte mit Städten, für die Koordinaten vorliegen">
             <path class="map-country" d="M 438.09 128.73 L 449.58 169.19 L 435.87 190.42 L 453.73 218.76 L 465.90 261.29 L 462.07 288.70 L 482.24 339.47 L 460.28 347.77 L 447.31 338.63 L 434.97 353.76 L 399.64 369.16 L 381.37 388.97 L 345.61 406.29 L 354.23 429.92 L 359.43 463.45 L 384.54 482.56 L 412.32 516.74 L 394.97 553.40 L 377.30 563.50 L 384.27 615.30 L 379.69 628.82 L 364.34 612.54 L 340.75 610.10 L 305.58 624.35 L 262.19 620.96 L 255.18 641.95 L 230.29 619.87 L 215.44 624.25 L 162.71 599.94 L 152.61 617.21 L 110.76 616.66 L 117.01 560.01 L 141.88 505.56 L 70.98 490.92 L 47.77 470.10 L 50.54 435.24 L 40.72 417.28 L 46.31 363.56 L 38.04 280.24 L 67.60 280.20 L 80.07 250.28 L 92.33 177.47 L 83.13 150.59 L 92.74 133.75 L 133.86 129.43 L 142.99 146.96 L 176.40 107.76 L 165.15 77.96 L 162.89 32.86 L 200.08 43.35 L 231.56 31.25 L 232.43 61.97 L 282.15 80.50 L 281.62 108.72 L 331.65 93.79 L 359.31 72.01 L 414.86 103.41 L 438.09 128.73 Z"></path>
             <g id="mapCities"></g>
           </svg>
         </div>
-        <p class="map-help">Tippe auf einen Punkt, um die Stadt zu öffnen und den Erstbesuch einzutragen.</p>
+        <p class="map-help">Die Karte zeigt derzeit Städte mit hinterlegten Koordinaten. Alle Städte ab 20.000 Einwohnern findest du in der Liste.</p>
         <p class="data-credit">Kartengrundlage: Natural Earth · Koordinaten: GeoNames</p>
       </section>
 
