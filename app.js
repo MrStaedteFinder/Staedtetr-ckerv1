@@ -276,6 +276,7 @@ function toggleEuropeVisited(id) {
   saveEurope();
   renderEurope();
   renderEuropeOverview();
+  syncEuropeCapitalToCloud(id);
   if (activeEuropeCapitalId === id && els.europeCityDialog.open) openEuropeDetail(id);
 }
 
@@ -861,6 +862,7 @@ document.querySelector("#europeDetailForm").addEventListener("submit", event => 
   saveEurope();
   renderEurope();
   renderEuropeOverview();
+  syncEuropeCapitalToCloud(activeEuropeCapitalId);
   closeEuropeDetail();
 });
 
@@ -907,6 +909,8 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_cGd4ffADOCFMI1DixWg4TA_-j407jmF
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 let cloudUser = null;
 let registering = false;
+let cloudSessionReady = false;
+let cloudSyncInFlight = false;
 
 const accountEls = {
   dialog: document.querySelector("#accountDialog"), button: document.querySelector("#accountButton"),
@@ -919,6 +923,8 @@ const accountEls = {
   accountName: document.querySelector("#accountName"), friendForm: document.querySelector("#friendForm"),
   friendUsername: document.querySelector("#friendUsername"), friendHint: document.querySelector("#friendHint"),
   friendList: document.querySelector("#friendList"), leaderboard: document.querySelector("#leaderboardList"),
+  cloudStatus: document.querySelector("#cloudStatus"), profileAvatar: document.querySelector("#profileAvatar"),
+  profileScore: document.querySelector("#profileScore"),
   signOut: document.querySelector("#signOutButton")
 };
 
@@ -944,7 +950,18 @@ function renderAuthState() {
   accountEls.hint.textContent = registering
     ? "Nach der Registrierung bestätigst du gegebenenfalls deine E-Mail."
     : "Noch kein Konto? Erstelle eins kostenlos.";
-  if (signedIn) accountEls.accountName.textContent = cloudUser.user_metadata?.username || cloudUser.email;
+  if (signedIn) {
+    const name = cloudUser.user_metadata?.username || cloudUser.email;
+    accountEls.accountName.textContent = name;
+    accountEls.profileAvatar.textContent = name.slice(0, 1).toUpperCase();
+    accountEls.profileScore.textContent = cities.filter(city => visited.has(city.id)).length;
+  }
+}
+
+function setCloudStatus(text, state = "ready") {
+  if (!accountEls.cloudStatus) return;
+  accountEls.cloudStatus.textContent = text;
+  accountEls.cloudStatus.dataset.state = state;
 }
 
 async function ensureProfile() {
@@ -958,42 +975,91 @@ async function ensureProfile() {
 }
 
 async function syncCloudProgress() {
-  if (!cloudUser) return;
-  const localVisits = cities.filter(city => visited.has(city.id)).map(city => ({
-    user_id: cloudUser.id, city_id: city.id, first_visit: visitDetails[city.id]?.firstVisit || null
-  }));
+  if (!cloudUser || cloudSyncInFlight) return;
+  cloudSyncInFlight = true;
+  setCloudStatus("Synchronisiere Fortschritt …", "loading");
+  const localVisits = [
+    ...cities.filter(city => visited.has(city.id)).map(city => ({
+      user_id: cloudUser.id, city_id: city.id, first_visit: visitDetails[city.id]?.firstVisit || null
+    })),
+    ...europeanCapitals.filter(capital => europeVisited.has(capital.id)).map(capital => ({
+      user_id: cloudUser.id, city_id: `europe:${capital.id}`, first_visit: europeDetails[capital.id]?.firstVisit || null
+    }))
+  ];
+  try {
   if (localVisits.length) {
     const { error } = await supabaseClient.from("visits").upsert(localVisits, { onConflict: "user_id,city_id" });
-    if (error) console.error("Cloud sync failed", error);
+    if (error) throw error;
   }
   const { data, error } = await supabaseClient.from("visits").select("city_id, first_visit").eq("user_id", cloudUser.id);
-  if (error) return console.error("Cloud read failed", error);
+  if (error) throw error;
   const validIds = new Set(cities.map(city => city.id));
+  const validEuropeIds = new Set(europeanCapitals.map(capital => capital.id));
   data.forEach(row => {
+    if (row.city_id.startsWith("europe:")) {
+      const capitalId = row.city_id.slice("europe:".length);
+      if (!validEuropeIds.has(capitalId)) return;
+      europeVisited.add(capitalId);
+      if (row.first_visit) europeDetails[capitalId] = { firstVisit: row.first_visit };
+      return;
+    }
     if (!validIds.has(row.city_id)) return;
     visited.add(row.city_id);
     if (row.first_visit) visitDetails[row.city_id] = { firstVisit: row.first_visit };
   });
-  saveData(); renderAll();
+  saveData(); saveEurope(); renderAll();
+  setCloudStatus("Fortschritt sicher gespeichert", "ready");
+  } catch (error) {
+    console.error("Cloud sync failed", error);
+    setCloudStatus("Offline – wird später synchronisiert", "offline");
+  } finally {
+    cloudSyncInFlight = false;
+  }
 }
 
 async function syncCityToCloud(cityId) {
   if (!cloudUser) return;
+  try {
   if (visited.has(cityId)) {
     const { error } = await supabaseClient.from("visits").upsert({
       user_id: cloudUser.id, city_id: cityId, first_visit: visitDetails[cityId]?.firstVisit || null
     }, { onConflict: "user_id,city_id" });
-    if (error) console.error("Cloud update failed", error);
+    if (error) throw error;
   } else {
     const { error } = await supabaseClient.from("visits").delete().eq("user_id", cloudUser.id).eq("city_id", cityId);
-    if (error) console.error("Cloud delete failed", error);
+    if (error) throw error;
   }
+  setCloudStatus("Fortschritt sicher gespeichert", "ready");
   loadLeaderboard();
+  } catch (error) {
+    console.error("Cloud update failed", error);
+    setCloudStatus("Offline – wird später synchronisiert", "offline");
+  }
+}
+
+async function syncEuropeCapitalToCloud(capitalId) {
+  if (!cloudUser) return;
+  const cityId = `europe:${capitalId}`;
+  try {
+    if (europeVisited.has(capitalId)) {
+      const { error } = await supabaseClient.from("visits").upsert({
+        user_id: cloudUser.id, city_id: cityId, first_visit: europeDetails[capitalId]?.firstVisit || null
+      }, { onConflict: "user_id,city_id" });
+      if (error) throw error;
+    } else {
+      const { error } = await supabaseClient.from("visits").delete().eq("user_id", cloudUser.id).eq("city_id", cityId);
+      if (error) throw error;
+    }
+    setCloudStatus("Fortschritt sicher gespeichert", "ready");
+  } catch (error) {
+    console.error("Europe cloud update failed", error);
+    setCloudStatus("Offline – wird später synchronisiert", "offline");
+  }
 }
 
 async function clearCloudVisits() {
   if (!cloudUser) return;
-  const { error } = await supabaseClient.from("visits").delete().eq("user_id", cloudUser.id);
+  const { error } = await supabaseClient.from("visits").delete().eq("user_id", cloudUser.id).not("city_id", "like", "europe:%");
   if (error) console.error("Cloud reset failed", error);
   loadLeaderboard();
 }
@@ -1073,13 +1139,26 @@ accountEls.friendList.addEventListener("click", async event => {
 });
 accountEls.signOut.addEventListener("click", async () => { await supabaseClient.auth.signOut(); accountEls.dialog.close(); });
 
-supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+async function applyCloudSession(session) {
   cloudUser = session?.user || null;
-  if (cloudUser) { await ensureProfile(); await syncCloudProgress(); }
   renderAuthState();
+  if (!cloudUser || cloudSessionReady) return;
+  cloudSessionReady = true;
+  try {
+    await ensureProfile();
+    await syncCloudProgress();
+  } catch (error) {
+    console.error("Cloud startup failed", error);
+    setCloudStatus("Offline – wird später synchronisiert", "offline");
+  }
+}
+
+// Supabase empfiehlt, in diesem Listener keine langen Datenbankaufrufe direkt abzuwarten.
+// Die kurze Verzögerung verhindert den Fehler beim App-Neustart mit bestehender Sitzung.
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+  cloudSessionReady = false;
+  window.setTimeout(() => applyCloudSession(session), 0);
 });
-supabaseClient.auth.getSession().then(({ data }) => {
-  cloudUser = data.session?.user || null;
-  renderAuthState();
-  if (cloudUser) ensureProfile().then(syncCloudProgress);
-});
+supabaseClient.auth.getSession()
+  .then(({ data }) => applyCloudSession(data.session))
+  .catch(error => console.error("Session konnte nicht geladen werden", error));

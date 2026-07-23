@@ -778,25 +778,35 @@ dialog::backdrop { background: rgba(17,24,39,.48); backdrop-filter: blur(4px); }
 }
 
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
-.account-button { border: 1px solid var(--border); border-radius: 999px; background: white; color: var(--ink); padding: 8px 12px; font-weight: 800; font-size: .78rem; }
+.account-button { border: 1px solid var(--border); border-radius: 999px; background: #ffffff; color: #111827; padding: 8px 12px; font-weight: 800; font-size: .78rem; }
 .account-dialog { width: min(100% - 28px, 560px); border: 0; padding: 0; background: transparent; }
 .account-dialog::backdrop { background: rgba(15, 23, 42, .58); }
-.account-dialog-card { max-height: min(760px, 88vh); overflow: auto; }
+.account-dialog-card { max-height: min(760px, 88vh); overflow: auto; background: #ffffff; color: #111827; }
 .account-form { display: grid; gap: 13px; margin-top: 18px; }
 .account-form label, .inline-form { display: grid; gap: 6px; }
 .account-form label > span { font-size: .78rem; font-weight: 800; color: var(--muted); }
 .account-form input, .inline-form input { width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px; font: inherit; color: var(--ink); background: white; }
-.form-hint { color: var(--muted); font-size: .8rem; line-height: 1.45; margin: 8px 0 0; }
+.form-hint { color: #4b5563; font-size: .8rem; line-height: 1.45; margin: 8px 0 0; }
 .account-section { border-top: 1px solid var(--border); margin-top: 20px; padding-top: 18px; }
 .account-section .section-heading { margin-bottom: 10px; }
 .account-section .section-heading h3 { font-size: 1rem; }
 .inline-form { grid-template-columns: 1fr auto; align-items: center; }
 .inline-form .primary-button { padding: 11px 13px; }
 .account-list { display: grid; gap: 8px; }
-.account-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 12px; }
+.account-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border: 1px solid #dbe1e8; border-radius: 12px; background: #ffffff; color: #111827; }
 .account-row span { display: grid; gap: 3px; min-width: 0; }
-.account-row small { color: var(--muted); font-size: .75rem; }
+.account-row small { color: #4b5563; font-size: .75rem; }
 .account-row .secondary-button { padding: 7px 10px; font-size: .76rem; }
+.profile-card { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 15px; border-radius: 14px; background: #111827; color: #ffffff; }
+.profile-avatar { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; background: #147d64; color: #ffffff; font-weight: 900; }
+.profile-card > div { display: grid; gap: 3px; }
+.profile-card small { color: #d1d5db; font-size: .75rem; }
+.profile-card small[data-state="offline"] { color: #fcd34d; }
+.profile-score { min-width: 42px; text-align: center; font-size: 1.55rem; }
+.profile-score::after { content: " Städte"; display: block; font-size: .62rem; font-weight: 700; color: #d1d5db; }
+.rank-badge { width: 28px; height: 28px; flex: 0 0 auto; display: grid !important; place-items: center; border-radius: 50%; background: #e5e7eb; color: #111827; font-size: .78rem; font-weight: 900; }
+.leaderboard-row { justify-content: flex-start; }
+.leaderboard-row.is-me { border-color: #147d64; background: #edf8f4; }
 @media (max-width: 390px) { .account-button { padding: 7px 9px; } }
 
 

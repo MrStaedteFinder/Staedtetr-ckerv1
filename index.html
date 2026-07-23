@@ -474,7 +474,7 @@
     <div class="dialog-card account-dialog-card">
       <div class="dialog-header">
         <div>
-          <p class="section-kicker">Cloud &amp; Freunde</p>
+          <p class="section-kicker">Dein Profil</p>
           <h2 id="accountTitle">Anmelden</h2>
         </div>
         <button type="button" class="icon-button" id="closeAccountDialog" aria-label="Schließen">×</button>
@@ -495,18 +495,22 @@
       </div>
 
       <div id="accountPanel" class="hidden">
-        <p class="detail-meta">Angemeldet als <strong id="accountName"></strong>. Dein Fortschritt wird automatisch mit der Cloud abgeglichen.</p>
+        <div class="profile-card">
+          <span class="profile-avatar" id="profileAvatar">S</span>
+          <div><strong id="accountName"></strong><small id="cloudStatus">Fortschritt wird gespeichert</small></div>
+          <strong class="profile-score" id="profileScore">0</strong>
+        </div>
         <section class="account-section">
-          <div class="section-heading"><h3>Freund hinzufügen</h3></div>
-          <form id="friendForm" class="inline-form"><input id="friendUsername" type="text" placeholder="Nutzername" required><button class="primary-button" type="submit">Senden</button></form>
+          <div class="section-heading"><div><p class="section-kicker">Gemeinsam sammeln</p><h3>Freund hinzufügen</h3></div></div>
+          <form id="friendForm" class="inline-form"><input id="friendUsername" type="text" placeholder="Nutzername eingeben" required><button class="primary-button" type="submit">Hinzufügen</button></form>
           <p class="form-hint" id="friendHint"></p>
         </section>
         <section class="account-section">
-          <div class="section-heading"><h3>Deine Freunde</h3></div>
+          <div class="section-heading"><div><p class="section-kicker">Deine Gruppe</p><h3>Freunde</h3></div></div>
           <div id="friendList" class="account-list"></div>
         </section>
         <section class="account-section">
-          <div class="section-heading"><h3>Rangliste</h3></div>
+          <div class="section-heading"><div><p class="section-kicker">Alle Challenges</p><h3>Rangliste</h3></div></div>
           <div id="leaderboardList" class="account-list"></div>
         </section>
         <button class="secondary-button" id="signOutButton" type="button">Abmelden</button>
