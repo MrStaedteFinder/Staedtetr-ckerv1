@@ -15,7 +15,7 @@
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">VERSION 0.8 · DEUTSCHLAND-CHALLENGE</p>
+        <p class="eyebrow">VERSION 0.10 · DEUTSCHLAND & EUROPA</p>
         <h1>Städtetracker</h1>
       </div>
       <div class="topbar-actions">
@@ -59,6 +59,23 @@
         <section class="section-block">
           <div class="section-heading">
             <div>
+              <p class="section-kicker">Europa-Challenge</p>
+              <h3>Europäische Hauptstädte</h3>
+            </div>
+            <button class="text-button" data-nav-target="europeView">Alle anzeigen</button>
+          </div>
+          <button class="europe-overview-card" data-nav-target="europeView" aria-label="Europäische Hauptstädte öffnen">
+            <div>
+              <strong id="europeOverviewCount">0 von 48</strong>
+              <span>Hauptstädte besucht</span>
+            </div>
+            <div class="mini-ring" id="europeOverviewRing"><span id="europePercentOverview">0%</span></div>
+          </button>
+        </section>
+
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
               <p class="section-kicker">Fortschritt</p>
               <h3>Nach Bundesland</h3>
             </div>
@@ -80,6 +97,7 @@
 
       <section class="view" id="citiesView" aria-labelledby="citiesTitle">
         <div class="section-heading sticky-heading">
+          <button class="back-button" data-nav-target="overviewView" aria-label="Zurück zur Übersicht">←</button>
           <div>
             <p class="section-kicker">Deutschland · Stand 31.12.2024</p>
             <h2 id="citiesTitle">Städte</h2>
@@ -132,8 +150,56 @@
         </div>
       </section>
 
+
+      <section class="view" id="europeView" aria-labelledby="europeTitle">
+        <div class="section-heading sticky-heading">
+          <button class="back-button" data-nav-target="overviewView" aria-label="Zurück zur Übersicht">←</button>
+          <div>
+            <p class="section-kicker">Eigene Challenge</p>
+            <h2 id="europeTitle">Europäische Hauptstädte</h2>
+          </div>
+          <span class="result-count" id="europeResultCount">0 / 48</span>
+        </div>
+
+        <div class="hero-card europe-hero">
+          <div class="hero-copy">
+            <p class="section-kicker">Europa</p>
+            <h2><span id="europeVisitedCount">0</span> von <span id="europeTotalCount">48</span></h2>
+            <p class="muted"><span id="europePercent">0</span> % besucht</p>
+          </div>
+          <div class="ring" id="europeProgressRing" aria-label="Fortschritt europäische Hauptstädte">
+            <span id="europeRingPercent">0%</span>
+          </div>
+        </div>
+
+        <section class="criteria-card">
+          <p class="section-kicker">Umfang</p>
+          <h3>48 europäische Hauptstädte</h3>
+          <p>Diese Test-Challenge umfasst die Hauptstädte der europäischen Staaten einschließlich Kosovo sowie der teilweise in Europa liegenden Staaten Armenien, Aserbaidschan, Georgien und Zypern.</p>
+        </section>
+
+        <div class="controls-card europe-controls">
+          <label class="search-field">
+            <span class="sr-only">Hauptstadt suchen</span>
+            <input id="europeSearchInput" type="search" placeholder="Hauptstadt oder Land suchen …" autocomplete="off">
+          </label>
+          <div class="segmented-control" aria-label="Europa-Besuchsstatus filtern">
+            <button class="segment europe-segment active" data-europe-status="all">Alle</button>
+            <button class="segment europe-segment" data-europe-status="visited">Besucht</button>
+            <button class="segment europe-segment" data-europe-status="open">Offen</button>
+          </div>
+        </div>
+
+        <div id="europeCapitalList" class="city-list"></div>
+        <div id="europeEmptyState" class="empty-state hidden">
+          <strong>Keine Hauptstadt gefunden</strong>
+          <p>Ändere die Suche oder den Filter.</p>
+        </div>
+      </section>
+
       <section class="view" id="statsView" aria-labelledby="statsTitle">
         <div class="section-heading">
+          <button class="back-button" data-nav-target="overviewView" aria-label="Zurück zur Übersicht">←</button>
           <div>
             <p class="section-kicker">Auswertung</p>
             <h2 id="statsTitle">Statistik</h2>
@@ -166,6 +232,11 @@
             <span>Landeshauptstädte</span>
             <strong id="capitalStats">0 / 16 · 0 %</strong>
             <small>Alle 16 Landeshauptstädte</small>
+          </article>
+          <article class="stat-card stat-card-wide europe-stat-card">
+            <span>Europäische Hauptstädte</span>
+            <strong id="europeCapitalStats">0 / 48 · 0 %</strong>
+            <small id="europeCapitalOpen">Noch 48 Hauptstädte offen</small>
           </article>
         </div>
 
@@ -220,6 +291,10 @@
       <button class="nav-item" data-view="citiesView">
         <span class="nav-icon">◎</span>
         <span>Städte</span>
+      </button>
+      <button class="nav-item" data-view="europeView">
+        <span class="nav-icon">✦</span>
+        <span>Europa</span>
       </button>
       <button class="nav-item" data-view="statsView">
         <span class="nav-icon">▥</span>
@@ -278,6 +353,29 @@
   </dialog>
 
 
+
+  <dialog id="europeCityDialog">
+    <form class="dialog-card" id="europeDetailForm">
+      <div class="dialog-header">
+        <div>
+          <p class="section-kicker" id="europeDetailCountry">Land</p>
+          <h2 id="europeDetailCity">Hauptstadt</h2>
+        </div>
+        <button type="button" class="icon-button" id="closeEuropeDialog" aria-label="Schließen">×</button>
+      </div>
+      <div class="detail-status" id="europeDetailStatus"></div>
+      <label class="date-field" for="europeFirstVisitDate">
+        <span>Erstes Besuchsdatum <small>(optional)</small></span>
+        <input type="date" id="europeFirstVisitDate">
+      </label>
+      <p class="date-hint">Die Europa-Challenge wird getrennt von der deutschen Städteliste gespeichert.</p>
+      <div class="dialog-actions">
+        <button type="button" class="secondary-button" id="europeVisitButton">Als besucht markieren</button>
+        <button type="submit" class="primary-button">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="badgeDialog" class="badge-dialog">
     <div class="dialog-card badge-dialog-card">
       <div class="dialog-header">
@@ -317,6 +415,56 @@
             <span class="result-count" id="badgeMissingCount">0</span>
           </div>
           <div id="badgeMissingList" class="badge-detail-list"></div>
+        </section>
+      </div>
+    </div>
+  </dialog>
+
+
+  <dialog id="stateDialog" class="state-dialog">
+    <div class="dialog-card state-dialog-card">
+      <div class="dialog-header">
+        <div>
+          <p class="section-kicker" id="stateDetailType">Bundesland</p>
+          <h2 id="stateDetailName">Bundesland</h2>
+        </div>
+        <button type="button" class="icon-button" id="closeStateDialog" aria-label="Schließen">×</button>
+      </div>
+
+      <div class="state-badge-card" id="stateBadgeCard">
+        <div class="state-badge-symbol" id="stateBadgeSymbol">✓</div>
+        <div>
+          <strong id="stateBadgeTitle">Bundesland-Abzeichen</strong>
+          <span id="stateBadgeText">Noch nicht freigeschaltet</span>
+        </div>
+      </div>
+
+      <div class="state-detail-metrics">
+        <article class="metric-box"><span>Fortschritt</span><strong id="stateDetailProgress">0 %</strong></article>
+        <article class="metric-box"><span>Besucht</span><strong id="stateDetailVisited">0 / 0</strong></article>
+        <article class="metric-box"><span>Größte offene Stadt</span><strong id="stateDetailLargestOpen">–</strong></article>
+        <article class="metric-box"><span>Erster Besuch</span><strong id="stateDetailFirstVisit">–</strong></article>
+        <article class="metric-box metric-box-wide"><span>Abschlussdatum</span><strong id="stateDetailCompletion">Noch nicht komplett</strong></article>
+      </div>
+
+      <div class="progress-track state-detail-track">
+        <div class="progress-fill" id="stateDetailProgressBar"></div>
+      </div>
+
+      <div class="badge-detail-sections state-city-sections">
+        <section>
+          <div class="badge-list-heading">
+            <h3>Besuchte Städte</h3>
+            <span class="result-count" id="stateVisitedCount">0</span>
+          </div>
+          <div id="stateVisitedList" class="badge-detail-list"></div>
+        </section>
+        <section>
+          <div class="badge-list-heading">
+            <h3>Offene Städte</h3>
+            <span class="result-count" id="stateOpenCount">0</span>
+          </div>
+          <div id="stateOpenList" class="badge-detail-list"></div>
         </section>
       </div>
     </div>

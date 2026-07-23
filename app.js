@@ -23,13 +23,23 @@ AREA_STATES.forEach(state => {
 
 const cities = allCities.filter(city => challengeCityIds.has(city.id));
 
+const europeanCapitals = [{"id":"tirana","city":"Tirana","country":"Albanien","population":598176},{"id":"andorra-la-vella","city":"Andorra la Vella","country":"Andorra","population":22615},{"id":"jerewan","city":"Jerewan","country":"Armenien","population":1092800},{"id":"wien","city":"Wien","country":"Österreich","population":2028652},{"id":"baku","city":"Baku","country":"Aserbaidschan","population":2336000},{"id":"minsk","city":"Minsk","country":"Belarus","population":1996553},{"id":"bruessel","city":"Brüssel","country":"Belgien","population":196828},{"id":"sarajevo","city":"Sarajevo","country":"Bosnien und Herzegowina","population":275524},{"id":"sofia","city":"Sofia","country":"Bulgarien","population":1280334},{"id":"zagreb","city":"Zagreb","country":"Kroatien","population":767131},{"id":"nikosia","city":"Nikosia","country":"Zypern","population":330000},{"id":"prag","city":"Prag","country":"Tschechien","population":1400000},{"id":"kopenhagen","city":"Kopenhagen","country":"Dänemark","population":667099},{"id":"tallinn","city":"Tallinn","country":"Estland","population":461371},{"id":"helsinki","city":"Helsinki","country":"Finnland","population":684018},{"id":"paris","city":"Paris","country":"Frankreich","population":2048000},{"id":"tiflis","city":"Tiflis","country":"Georgien","population":1258000},{"id":"berlin-eu","city":"Berlin","country":"Deutschland","population":3897824},{"id":"athen","city":"Athen","country":"Griechenland","population":643452},{"id":"budapest","city":"Budapest","country":"Ungarn","population":1686222},{"id":"reykjavik","city":"Reykjavík","country":"Island","population":139875},{"id":"dublin","city":"Dublin","country":"Irland","population":592713},{"id":"rom","city":"Rom","country":"Italien","population":2747590},{"id":"pristina","city":"Pristina","country":"Kosovo","population":227466},{"id":"riga","city":"Riga","country":"Lettland","population":605802},{"id":"vaduz","city":"Vaduz","country":"Liechtenstein","population":5741},{"id":"vilnius","city":"Vilnius","country":"Litauen","population":607667},{"id":"luxemburg","city":"Luxemburg","country":"Luxemburg","population":134697},{"id":"valletta","city":"Valletta","country":"Malta","population":5952},{"id":"chisinau","city":"Chișinău","country":"Moldau","population":665460},{"id":"monaco","city":"Monaco","country":"Monaco","population":38956},{"id":"podgorica","city":"Podgorica","country":"Montenegro","population":179505},{"id":"amsterdam","city":"Amsterdam","country":"Niederlande","population":934526},{"id":"skopje","city":"Skopje","country":"Nordmazedonien","population":526502},{"id":"oslo","city":"Oslo","country":"Norwegen","population":717710},{"id":"warschau","city":"Warschau","country":"Polen","population":1861644},{"id":"lissabon","city":"Lissabon","country":"Portugal","population":575739},{"id":"bukarest","city":"Bukarest","country":"Rumänien","population":1716961},{"id":"san-marino","city":"San Marino","country":"San Marino","population":4061},{"id":"belgrad","city":"Belgrad","country":"Serbien","population":1197714},{"id":"bratislava","city":"Bratislava","country":"Slowakei","population":475503},{"id":"ljubljana","city":"Ljubljana","country":"Slowenien","population":300000},{"id":"madrid","city":"Madrid","country":"Spanien","population":3416771},{"id":"stockholm","city":"Stockholm","country":"Schweden","population":995574},{"id":"bern","city":"Bern","country":"Schweiz","population":146455},{"id":"kyjiw","city":"Kyjiw","country":"Ukraine","population":2967000},{"id":"london","city":"London","country":"Vereinigtes Königreich","population":8866180},{"id":"vatikanstadt","city":"Vatikanstadt","country":"Vatikanstadt","population":764}];
+
 const STORAGE_KEY = "staedtetracker.visited.v0.1";
 const DETAILS_KEY = "staedtetracker.details.v0.8";
+const EUROPE_STORAGE_KEY = "staedtetracker.europe.visited.v0.9";
+const EUROPE_DETAILS_KEY = "staedtetracker.europe.details.v0.9";
+const STATE_COMPLETION_KEY = "staedtetracker.state-completions.v0.9";
 const MAP_BOUNDS = { minLon: 5.5, maxLon: 15.5, minLat: 47.0, maxLat: 55.2, width: 520, height: 680, pad: 14 };
 let visited = new Set([...loadVisited()].filter(id => challengeCityIds.has(id)));
 let visitDetails = loadDetails();
 let activeStatus = "all";
 let activeDetailCityId = null;
+let activeEuropeCapitalId = null;
+let activeEuropeStatus = "all";
+let europeVisited = new Set(JSON.parse(localStorage.getItem(EUROPE_STORAGE_KEY) || "[]"));
+let europeDetails = JSON.parse(localStorage.getItem(EUROPE_DETAILS_KEY) || "{}");
+let stateCompletionDates = JSON.parse(localStorage.getItem(STATE_COMPLETION_KEY) || "{}");
 
 const els = {
   visitedCount: document.querySelector("#visitedCount"),
@@ -54,6 +64,8 @@ const els = {
   metroPercent: document.querySelector("#metroPercent"),
   statesReached: document.querySelector("#statesReached"),
   capitalStats: document.querySelector("#capitalStats"),
+  europeCapitalStats: document.querySelector("#europeCapitalStats"),
+  europeCapitalOpen: document.querySelector("#europeCapitalOpen"),
   areaStateRanking: document.querySelector("#areaStateRanking"),
   cityStateRanking: document.querySelector("#cityStateRanking"),
   badgeGrid: document.querySelector("#badgeGrid"),
@@ -79,7 +91,41 @@ const els = {
   badgeDoneList: document.querySelector("#badgeDoneList"),
   badgeMissingTitle: document.querySelector("#badgeMissingTitle"),
   badgeMissingCount: document.querySelector("#badgeMissingCount"),
-  badgeMissingList: document.querySelector("#badgeMissingList")
+  badgeMissingList: document.querySelector("#badgeMissingList"),
+  europeOverviewCount: document.querySelector("#europeOverviewCount"),
+  europePercentOverview: document.querySelector("#europePercentOverview"),
+  europeOverviewRing: document.querySelector("#europeOverviewRing"),
+  europeVisitedCount: document.querySelector("#europeVisitedCount"),
+  europeTotalCount: document.querySelector("#europeTotalCount"),
+  europePercent: document.querySelector("#europePercent"),
+  europeProgressRing: document.querySelector("#europeProgressRing"),
+  europeRingPercent: document.querySelector("#europeRingPercent"),
+  europeResultCount: document.querySelector("#europeResultCount"),
+  europeSearchInput: document.querySelector("#europeSearchInput"),
+  europeCapitalList: document.querySelector("#europeCapitalList"),
+  europeEmptyState: document.querySelector("#europeEmptyState"),
+  europeCityDialog: document.querySelector("#europeCityDialog"),
+  europeDetailCountry: document.querySelector("#europeDetailCountry"),
+  europeDetailCity: document.querySelector("#europeDetailCity"),
+  europeDetailStatus: document.querySelector("#europeDetailStatus"),
+  europeFirstVisitDate: document.querySelector("#europeFirstVisitDate"),
+  europeVisitButton: document.querySelector("#europeVisitButton"),
+  stateDialog: document.querySelector("#stateDialog"),
+  stateDetailType: document.querySelector("#stateDetailType"),
+  stateDetailName: document.querySelector("#stateDetailName"),
+  stateBadgeCard: document.querySelector("#stateBadgeCard"),
+  stateBadgeTitle: document.querySelector("#stateBadgeTitle"),
+  stateBadgeText: document.querySelector("#stateBadgeText"),
+  stateDetailProgress: document.querySelector("#stateDetailProgress"),
+  stateDetailVisited: document.querySelector("#stateDetailVisited"),
+  stateDetailLargestOpen: document.querySelector("#stateDetailLargestOpen"),
+  stateDetailFirstVisit: document.querySelector("#stateDetailFirstVisit"),
+  stateDetailCompletion: document.querySelector("#stateDetailCompletion"),
+  stateDetailProgressBar: document.querySelector("#stateDetailProgressBar"),
+  stateVisitedCount: document.querySelector("#stateVisitedCount"),
+  stateOpenCount: document.querySelector("#stateOpenCount"),
+  stateVisitedList: document.querySelector("#stateVisitedList"),
+  stateOpenList: document.querySelector("#stateOpenList")
 };
 
 function loadVisited() {
@@ -145,7 +191,184 @@ function toggleVisited(id) {
   syncCityToCloud(id);
 }
 
+
+function saveEurope() {
+  localStorage.setItem(EUROPE_STORAGE_KEY, JSON.stringify([...europeVisited]));
+  localStorage.setItem(EUROPE_DETAILS_KEY, JSON.stringify(europeDetails));
+}
+
+function saveStateCompletions() {
+  localStorage.setItem(STATE_COMPLETION_KEY, JSON.stringify(stateCompletionDates));
+}
+
+function updateStateCompletionDates() {
+  stateStats().forEach(item => {
+    if (item.count === item.total && item.total > 0) {
+      if (!stateCompletionDates[item.state]) {
+        stateCompletionDates[item.state] = new Date().toISOString().slice(0, 10);
+      }
+    } else if (stateCompletionDates[item.state]) {
+      delete stateCompletionDates[item.state];
+    }
+  });
+  saveStateCompletions();
+}
+
+function renderEuropeOverview() {
+  const count = europeanCapitals.filter(capital => europeVisited.has(capital.id)).length;
+  const progress = percent(count, europeanCapitals.length);
+  els.europeOverviewCount.textContent = `${count} von ${europeanCapitals.length}`;
+  els.europePercentOverview.textContent = `${progress}%`;
+  els.europeOverviewRing.style.setProperty("--progress", `${progress * 3.6}deg`);
+}
+
+function renderEurope() {
+  const count = europeanCapitals.filter(capital => europeVisited.has(capital.id)).length;
+  const progress = percent(count, europeanCapitals.length);
+  els.europeVisitedCount.textContent = count;
+  els.europeTotalCount.textContent = europeanCapitals.length;
+  els.europePercent.textContent = progress;
+  els.europeRingPercent.textContent = `${progress}%`;
+  els.europeProgressRing.style.setProperty("--progress", `${progress * 3.6}deg`);
+
+  const query = els.europeSearchInput.value.trim().toLocaleLowerCase("de");
+  const filtered = europeanCapitals
+    .filter(capital => {
+      const matchSearch = !query || `${capital.city} ${capital.country}`.toLocaleLowerCase("de").includes(query);
+      const isVisited = europeVisited.has(capital.id);
+      const matchStatus = activeEuropeStatus === "all" ||
+        (activeEuropeStatus === "visited" && isVisited) ||
+        (activeEuropeStatus === "open" && !isVisited);
+      return matchSearch && matchStatus;
+    })
+    .sort((a, b) => a.country.localeCompare(b.country, "de"));
+
+  els.europeResultCount.textContent = `${count} / ${europeanCapitals.length}`;
+  els.europeEmptyState.classList.toggle("hidden", filtered.length > 0);
+  els.europeCapitalList.innerHTML = filtered.map(capital => {
+    const isVisited = europeVisited.has(capital.id);
+    const date = europeDetails[capital.id]?.firstVisit || "";
+    return `<article class="city-card ${isVisited ? "visited" : ""}">
+      <div class="city-card-main">
+        <button class="city-title-button" data-europe-detail="${capital.id}">
+          <h3>${capital.city}</h3>
+        </button>
+        <div class="city-meta">
+          <span>${capital.country}</span><span>·</span>
+          <span>${formatPopulation(capital.population)} Einwohner</span>
+          <span class="category-badge">Hauptstadt</span>
+        </div>
+        ${isVisited ? `<button class="date-link" data-europe-detail="${capital.id}">Erstbesuch: ${formatDate(date)} ›</button>` : ""}
+      </div>
+      <button class="visit-toggle ${isVisited ? "visited" : ""}" data-europe-toggle="${capital.id}" aria-label="${capital.city} ${isVisited ? "als offen markieren" : "als besucht markieren"}">✓</button>
+    </article>`;
+  }).join("");
+}
+
+function toggleEuropeVisited(id) {
+  if (europeVisited.has(id)) {
+    europeVisited.delete(id);
+    delete europeDetails[id];
+  } else {
+    europeVisited.add(id);
+    europeDetails[id] ||= {};
+  }
+  saveEurope();
+  renderEurope();
+  renderEuropeOverview();
+  if (activeEuropeCapitalId === id && els.europeCityDialog.open) openEuropeDetail(id);
+}
+
+function openEuropeDetail(id) {
+  const capital = europeanCapitals.find(item => item.id === id);
+  if (!capital) return;
+  activeEuropeCapitalId = id;
+  const isVisited = europeVisited.has(id);
+  els.europeDetailCity.textContent = capital.city;
+  els.europeDetailCountry.textContent = `${capital.country} · ${formatPopulation(capital.population)} Einwohner`;
+  els.europeDetailStatus.innerHTML = `<span class="status-pill ${isVisited ? "visited" : "open"}">${isVisited ? "Besucht" : "Noch nicht besucht"}</span>`;
+  els.europeFirstVisitDate.value = europeDetails[id]?.firstVisit || "";
+  els.europeFirstVisitDate.disabled = !isVisited;
+  els.europeVisitButton.textContent = isVisited ? "Als nicht besucht markieren" : "Als besucht markieren";
+  els.europeVisitButton.classList.toggle("danger-button", isVisited);
+  if (!els.europeCityDialog.open) els.europeCityDialog.showModal();
+}
+
+function closeEuropeDetail() {
+  activeEuropeCapitalId = null;
+  els.europeCityDialog.close();
+}
+
+function stateCityItem(city, done) {
+  return `<button class="badge-detail-item ${done ? "done" : "missing"}" data-state-city="${city.id}">
+    <span class="badge-item-status" aria-hidden="true">${done ? "✓" : "○"}</span>
+    <span class="badge-item-copy">
+      <strong>${city.name}</strong>
+      <small>${formatPopulation(city.population)} Einwohner${city.capital ? " · Landeshauptstadt" : ""}</small>
+    </span>
+    <span class="badge-item-chevron" aria-hidden="true">›</span>
+  </button>`;
+}
+
+function openStateDetail(state) {
+  const stateCities = cities
+    .filter(city => city.state === state)
+    .sort((a,b) => b.population - a.population || a.name.localeCompare(b.name, "de"));
+  if (!stateCities.length) return;
+
+  updateStateCompletionDates();
+
+  const done = stateCities.filter(city => visited.has(city.id));
+  const open = stateCities.filter(city => !visited.has(city.id));
+  const progress = percent(done.length, stateCities.length);
+  const largestOpen = open[0];
+
+  const datedVisits = done
+    .map(city => ({ city, date: visitDetails[city.id]?.firstVisit }))
+    .filter(item => item.date)
+    .sort((a,b) => a.date.localeCompare(b.date));
+  const firstVisit = datedVisits[0];
+
+  const isComplete = open.length === 0;
+  els.stateDetailType.textContent = CITY_STATES.has(state) ? "Stadtstaat" : "Flächenland";
+  els.stateDetailName.textContent = state;
+  els.stateDetailProgress.textContent = `${progress} %`;
+  els.stateDetailVisited.textContent = `${done.length} / ${stateCities.length}`;
+  els.stateDetailLargestOpen.textContent = largestOpen
+    ? `${largestOpen.name} · ${formatPopulation(largestOpen.population)}`
+    : "Keine – komplett";
+  els.stateDetailFirstVisit.textContent = firstVisit
+    ? `${firstVisit.city.name} · ${formatDate(firstVisit.date)}`
+    : done.length ? "Datum nicht eingetragen" : "Noch keine Stadt";
+  els.stateDetailCompletion.textContent = isComplete
+    ? formatDate(stateCompletionDates[state])
+    : "Noch nicht komplett";
+  els.stateDetailProgressBar.style.width = `${progress}%`;
+
+  els.stateBadgeCard.classList.toggle("unlocked", isComplete);
+  els.stateBadgeTitle.textContent = `${state} komplett`;
+  els.stateBadgeText.textContent = isComplete
+    ? `Abzeichen am ${formatDate(stateCompletionDates[state])} freigeschaltet`
+    : `Noch ${open.length} ${open.length === 1 ? "Stadt" : "Städte"} bis zum Abzeichen`;
+
+  els.stateVisitedCount.textContent = done.length;
+  els.stateOpenCount.textContent = open.length;
+  els.stateVisitedList.innerHTML = done.length
+    ? done.map(city => stateCityItem(city, true)).join("")
+    : badgeEmptyMarkup("In diesem Bundesland ist noch keine Stadt besucht.");
+  els.stateOpenList.innerHTML = open.length
+    ? open.map(city => stateCityItem(city, false)).join("")
+    : badgeEmptyMarkup("Alle Städte dieses Bundeslands sind besucht.");
+
+  els.stateDialog.showModal();
+}
+
+function closeStateDetail() {
+  els.stateDialog.close();
+}
+
 function renderOverview() {
+  renderEuropeOverview();
   const visitedCount = cities.filter(city => visited.has(city.id)).length;
   const total = cities.length;
   const overall = percent(visitedCount, total);
@@ -243,7 +466,9 @@ function getBadges() {
     { id:"nationwide", icon:"16", title:"Bundesweit", description:"Jedes Bundesland erreicht", current:reachedStates, target:16 },
     { id:"area-state", icon:"✓", title:"Flächenland komplett", description:"Ein Flächenland vollständig besucht", current:fullAreaState ? 1 : 0, target:1 },
     { id:"top-ten", icon:"10", title:"Top Ten", description:"Die zehn größten Städte besucht", current:topTen.filter(c=>visited.has(c.id)).length, target:10 },
-    { id:"city-states", icon:"3", title:"Stadtstaaten-Trio", description:"Berlin, Hamburg und Bremen besucht", current:cityStateIds.filter(id=>visited.has(id)).length, target:3 }
+    { id:"city-states", icon:"3", title:"Stadtstaaten-Trio", description:"Berlin, Hamburg und Bremen besucht", current:cityStateIds.filter(id=>visited.has(id)).length, target:3 },
+    { id:"europe-ten", icon:"EU", title:"Europa-Entdecker", description:"Zehn europäische Hauptstädte besucht", current:europeVisited.size, target:10 },
+    { id:"europe-complete", icon:"48", title:"Europa komplett", description:"Alle 48 europäischen Hauptstädte besucht", current:europeVisited.size, target:europeanCapitals.length }
   ];
 }
 
@@ -274,6 +499,27 @@ function cityBadgeItems(items) {
   };
 }
 
+
+function europeBadgeItems(items) {
+  const sorted = [...items].sort((a,b) => a.country.localeCompare(b.country, "de"));
+  return {
+    doneTitle: "Besuchte Hauptstädte",
+    missingTitle: "Fehlende Hauptstädte",
+    done: sorted.filter(capital => europeVisited.has(capital.id)).map(capital => ({
+      kind: "europe",
+      id: capital.id,
+      label: capital.city,
+      meta: `${capital.country} · ${formatPopulation(capital.population)} Einwohner`
+    })),
+    missing: sorted.filter(capital => !europeVisited.has(capital.id)).map(capital => ({
+      kind: "europe",
+      id: capital.id,
+      label: capital.city,
+      meta: `${capital.country} · ${formatPopulation(capital.population)} Einwohner`
+    }))
+  };
+}
+
 function getBadgeDetail(id) {
   const badges = getBadges();
   const badge = badges.find(item => item.id === id);
@@ -296,6 +542,8 @@ function getBadgeDetail(id) {
     lists = cityBadgeItems(cities.filter(city =>
       city.name === "Berlin" || city.name === "Hamburg" || city.name === "Bremen"
     ));
+  } else if (id === "europe-ten" || id === "europe-complete") {
+    lists = europeBadgeItems(europeanCapitals);
   } else if (id === "nationwide") {
     const states = [...new Set(cities.map(city => city.state))].sort((a, b) => a.localeCompare(b, "de"));
     const reached = [];
@@ -360,7 +608,9 @@ function getBadgeDetail(id) {
 function badgeDetailItemMarkup(item, done) {
   const actionAttribute = item.kind === "state"
     ? `data-badge-state="${item.state}"`
-    : `data-badge-city="${item.id}"`;
+    : item.kind === "europe"
+      ? `data-badge-europe="${item.id}"`
+      : `data-badge-city="${item.id}"`;
 
   return `<button class="badge-detail-item ${done ? "done" : "missing"}" ${actionAttribute}>
     <span class="badge-item-status" aria-hidden="true">${done ? "✓" : "○"}</span>
@@ -426,6 +676,12 @@ function renderStats() {
   const reachedStates = ranked.filter(item=>item.count>0).length;
   els.statesReached.textContent = `${reachedStates} / ${ranked.length} · ${percent(reachedStates, ranked.length)} %`;
   els.capitalStats.textContent = `${capitalVisited} / ${capitals.length} · ${percent(capitalVisited, capitals.length)} %`;
+  const europeVisitedCount = europeanCapitals.filter(capital => europeVisited.has(capital.id)).length;
+  const europeOpenCount = europeanCapitals.length - europeVisitedCount;
+  els.europeCapitalStats.textContent = `${europeVisitedCount} / ${europeanCapitals.length} · ${percent(europeVisitedCount, europeanCapitals.length)} %`;
+  els.europeCapitalOpen.textContent = europeOpenCount
+    ? `Noch ${europeOpenCount} ${europeOpenCount === 1 ? "Hauptstadt" : "Hauptstädte"} offen`
+    : "Europa-Challenge abgeschlossen";
 
   const badges = getBadges();
   const unlocked = badges.filter(b=>b.current>=b.target).length;
@@ -478,7 +734,7 @@ function renderMap() {
   }).join("");
 }
 
-function renderAll() { renderOverview(); renderCities(); renderStats(); }
+function renderAll() { updateStateCompletionDates(); renderOverview(); renderCities(); renderEurope(); renderStats(); }
 
 function populateStateFilter() {
   const states=[...new Set(cities.map(city=>city.state))].sort((a,b)=>a.localeCompare(b,"de"));
@@ -523,8 +779,28 @@ function activateView(viewId) {
 }
 
 document.addEventListener("click", event => {
+  const europeToggle = event.target.closest("[data-europe-toggle]");
+  if (europeToggle) { toggleEuropeVisited(europeToggle.dataset.europeToggle); return; }
+
+  const europeDetail = event.target.closest("[data-europe-detail]");
+  if (europeDetail) { openEuropeDetail(europeDetail.dataset.europeDetail); return; }
+
+  const stateCity = event.target.closest("[data-state-city]");
+  if (stateCity) {
+    closeStateDetail();
+    openCityDetail(stateCity.dataset.stateCity);
+    return;
+  }
+
   const toggle=event.target.closest("[data-toggle]");
   if (toggle) { toggleVisited(toggle.dataset.toggle); return; }
+
+  const badgeEurope=event.target.closest("[data-badge-europe]");
+  if (badgeEurope) {
+    closeBadgeDetail();
+    openEuropeDetail(badgeEurope.dataset.badgeEurope);
+    return;
+  }
 
   const badgeCity=event.target.closest("[data-badge-city]");
   if (badgeCity) {
@@ -536,7 +812,7 @@ document.addEventListener("click", event => {
   const badgeState=event.target.closest("[data-badge-state]");
   if (badgeState) {
     closeBadgeDetail();
-    openStateCities(badgeState.dataset.badgeState);
+    openStateDetail(badgeState.dataset.badgeState);
     return;
   }
 
@@ -553,9 +829,40 @@ document.addEventListener("click", event => {
   const textNav=event.target.closest("[data-nav-target]");
   if (textNav) activateView(textNav.dataset.navTarget);
   const stateOpen=event.target.closest("[data-state-open]");
-  if (stateOpen) openStateCities(stateOpen.dataset.stateOpen);
+  if (stateOpen) openStateDetail(stateOpen.dataset.stateOpen);
 });
 
+
+document.querySelectorAll(".europe-segment").forEach(button => button.addEventListener("click", () => {
+  document.querySelectorAll(".europe-segment").forEach(item => item.classList.remove("active"));
+  button.classList.add("active");
+  activeEuropeStatus = button.dataset.europeStatus;
+  renderEurope();
+}));
+els.europeSearchInput.addEventListener("input", renderEurope);
+document.querySelector("#closeEuropeDialog").addEventListener("click", closeEuropeDetail);
+document.querySelector("#closeStateDialog").addEventListener("click", closeStateDetail);
+
+els.europeVisitButton.addEventListener("click", () => {
+  if (!activeEuropeCapitalId) return;
+  toggleEuropeVisited(activeEuropeCapitalId);
+});
+
+document.querySelector("#europeDetailForm").addEventListener("submit", event => {
+  event.preventDefault();
+  if (!activeEuropeCapitalId || !europeVisited.has(activeEuropeCapitalId)) {
+    closeEuropeDetail();
+    return;
+  }
+  europeDetails[activeEuropeCapitalId] = {
+    ...(europeDetails[activeEuropeCapitalId] || {}),
+    firstVisit: els.europeFirstVisitDate.value || ""
+  };
+  saveEurope();
+  renderEurope();
+  renderEuropeOverview();
+  closeEuropeDetail();
+});
 
 document.querySelectorAll(".segment").forEach(button=>button.addEventListener("click",()=>{
   document.querySelectorAll(".segment").forEach(item=>item.classList.remove("active"));

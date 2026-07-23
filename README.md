@@ -1,25 +1,14 @@
-# Städtetracker – Version 0.8
+# Städtetracker – Version 0.10
 
-Installierbare Web-App zum Sammeln besuchter deutscher Städte.
+## Neu und korrigiert
 
-## Auswahlregel
+- Anzeige der Europa-Kachel auf der Übersicht korrigiert
+- Zurückpfeil in Städte, Europa und Statistik
+- Einwohnerzahlen bei allen europäischen Hauptstädten
+- Europa-Fortschritt in der Statistik
+- Abzeichen „Europa-Entdecker“ für zehn Hauptstädte
+- Abzeichen „Europa komplett“ für alle 48 Hauptstädte
+- Europa-Abzeichen zeigen besuchte und fehlende Hauptstädte
+- Beschriftung über den Stadtstaaten auf „Rangliste“ geändert
 
-- grundsätzlich alle deutschen Städte ab 50.000 Einwohnern
-- jedes der 13 Flächenländer enthält mindestens seine zehn größten Städte
-- hat ein Flächenland weniger als zehn Städte ab 50.000 Einwohnern, werden die nächstgrößeren Städte ergänzt
-- kleinere Städte außerhalb dieser Top Ten sind nicht Teil der Challenge
-- Berlin, Hamburg und Bremen werden als Stadtstaaten separat behandelt und nicht künstlich aufgefüllt
-
-## Neu in Version 0.8
-
-- Karte entfernt
-- Startseite auf Großstädte und Mittelstädte reduziert
-- Mittelstädte umfassen alle enthaltenen Städte unter 100.000 Einwohnern
-- Einwohnerzahlen bei den größten offenen Städten
-- getrennte, anklickbare Ranglisten für 13 Flächenländer und 3 Stadtstaaten
-- Abzeichen „Erste Stadt“ und „Auf Tour“ entfernt
-- Auswahlregel direkt in der App erklärt
-
-## Daten
-
-Einwohnerzahlen und Städteliste: Statistisches Bundesamt, Stand 31. Dezember 2024.
+Die Einwohnerzahlen sind gerundete beziehungsweise datenquellenabhängige Stadtwerte und dienen innerhalb der App vor allem der Orientierung.
