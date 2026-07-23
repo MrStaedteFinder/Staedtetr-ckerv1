@@ -58,6 +58,44 @@ button { cursor: pointer; }
   text-transform: uppercase;
 }
 
+.country-picker-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.country-dialog { width: min(calc(100% - 24px), 560px); }
+.country-dialog-card { padding-bottom: 24px; }
+.country-options { display: grid; gap: 10px; margin-top: 20px; }
+.country-option {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+.country-option:hover, .country-option.active { border-color: var(--success); background: #edf8f4; }
+.country-option span:nth-child(2) { display: grid; gap: 3px; }
+.country-option small { color: var(--muted); }
+.country-option b { color: var(--muted); font-size: 1.3rem; }
+.country-flag { font-size: 1.75rem; }
+
 .icon-button {
   width: 42px;
   height: 42px;

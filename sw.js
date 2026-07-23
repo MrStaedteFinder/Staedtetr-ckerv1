@@ -1,6 +1,6 @@
 const CACHE_PREFIX = "staedtetracker-";
-const CACHE_NAME = `${CACHE_PREFIX}v0.12`;
-const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"];
+const CACHE_NAME = `${CACHE_PREFIX}v0.13`;
+const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./france-cities.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
