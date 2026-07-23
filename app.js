@@ -241,7 +241,7 @@ function renderEurope() {
         (activeEuropeStatus === "open" && !isVisited);
       return matchSearch && matchStatus;
     })
-    .sort((a, b) => a.country.localeCompare(b.country, "de"));
+    .sort((a, b) => b.population - a.population || a.city.localeCompare(b.city, "de"));
 
   els.europeResultCount.textContent = `${count} / ${europeanCapitals.length}`;
   els.europeEmptyState.classList.toggle("hidden", filtered.length > 0);
@@ -501,7 +501,7 @@ function cityBadgeItems(items) {
 
 
 function europeBadgeItems(items) {
-  const sorted = [...items].sort((a,b) => a.country.localeCompare(b.country, "de"));
+  const sorted = [...items].sort((a,b) => b.population - a.population || a.city.localeCompare(b.city, "de"));
   return {
     doneTitle: "Besuchte Hauptstädte",
     missingTitle: "Fehlende Hauptstädte",

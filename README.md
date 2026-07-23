@@ -1,4 +1,4 @@
-# Städtetracker – Version 0.10
+# Städtetracker – Version 0.10.1
 
 ## Neu und korrigiert
 
@@ -12,3 +12,10 @@
 - Beschriftung über den Stadtstaaten auf „Rangliste“ geändert
 
 Die Einwohnerzahlen sind gerundete beziehungsweise datenquellenabhängige Stadtwerte und dienen innerhalb der App vor allem der Orientierung.
+
+
+## Änderung in Version 0.10.1
+
+- Europäische Hauptstädte werden nach Einwohnerzahl sortiert.
+- Die größte Hauptstadt steht zuerst.
+- Dieselbe Sortierung gilt auch in den Europa-Abzeichen.
