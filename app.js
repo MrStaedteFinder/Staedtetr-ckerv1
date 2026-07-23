@@ -21,7 +21,9 @@ AREA_STATES.forEach(state => {
     .forEach(city => challengeCityIds.add(city.id));
 });
 
-const germanyCities = allCities.filter(city => challengeCityIds.has(city.id));
+const germanyCities = allCities
+  .filter(city => challengeCityIds.has(city.id))
+  .map(city => ({ ...city, ...(window.GERMANY_CITY_COORDINATES?.[city.id] || {}) }));
 const franceCities = (window.FRANCE_CITIES || []).map(city => ({
   ...city,
   category: city.population >= 100000 ? "metro" : "mid"
@@ -59,6 +61,8 @@ let activeEuropeStatus = "all";
 let europeVisited = new Set(JSON.parse(localStorage.getItem(EUROPE_STORAGE_KEY) || "[]"));
 let europeDetails = JSON.parse(localStorage.getItem(EUROPE_DETAILS_KEY) || "{}");
 let stateCompletionDates = JSON.parse(localStorage.getItem(STATE_COMPLETION_KEY) || "{}");
+let europeMap = null;
+let europeMapReady = false;
 
 const els = {
   visitedCount: document.querySelector("#visitedCount"),
@@ -155,7 +159,8 @@ const els = {
   citiesCountryLabel: document.querySelector("#citiesCountryLabel"),
   stateFilterLabel: document.querySelector("#stateFilterLabel"),
   stateFilterAll: document.querySelector("#stateFilterAll"),
-  stateSortLabel: document.querySelector("#stateSortLabel")
+  stateSortLabel: document.querySelector("#stateSortLabel"),
+  mapCount: document.querySelector("#mapCount")
 };
 
 function isGermany() { return activeCountry === "de"; }
@@ -771,28 +776,94 @@ function renderStats() {
   els.cityStateRanking.innerHTML = rankingMarkup(ranked.filter(item => CITY_STATES.has(item.state)));
 }
 
-function mapPoint(city) {
-  const x = MAP_BOUNDS.pad + (city.lng - MAP_BOUNDS.minLon) / (MAP_BOUNDS.maxLon - MAP_BOUNDS.minLon) * (MAP_BOUNDS.width - 2 * MAP_BOUNDS.pad);
-  const y = MAP_BOUNDS.pad + (MAP_BOUNDS.maxLat - city.lat) / (MAP_BOUNDS.maxLat - MAP_BOUNDS.minLat) * (MAP_BOUNDS.height - 2 * MAP_BOUNDS.pad);
-  return {x,y};
+function germanyMapFeatures() {
+  return {
+    type: "FeatureCollection",
+    features: germanyCities
+      .filter(city => Number.isFinite(city.lat) && Number.isFinite(city.lng))
+      .map(city => ({
+        type: "Feature",
+        properties: { id: city.id, name: city.name, visited: visited.has(city.id), capital: city.capital },
+        geometry: { type: "Point", coordinates: [city.lng, city.lat] }
+      }))
+  };
 }
 
-function renderMap() {
-  const mappedCities = cities.filter(city => Number.isFinite(city.lat) && Number.isFinite(city.lng));
-  const mappedVisited = mappedCities.filter(city => visited.has(city.id)).length;
-  els.mapVisitedCount.textContent = `${mappedVisited} / ${mappedCities.length}`;
-  els.mapCities.innerHTML = [...mappedCities].sort((a,b)=>a.population-b.population).map(city => {
-    const p = mapPoint(city);
-    const isVisited = visited.has(city.id);
-    return `<g class="map-marker ${isVisited ? "visited" : "open"} ${city.capital ? "capital" : ""}" data-city-detail="${city.id}" tabindex="0" role="button" aria-label="${city.name}, ${isVisited ? "besucht" : "noch offen"}">
-      <circle class="map-hit" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="9"></circle>
-      ${city.capital ? `<circle class="map-capital-ring" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="5.6"></circle>` : ''}
-      <circle class="map-dot" cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="${isVisited ? 3.5 : 2.8}"><title>${city.name} · ${isVisited ? "Besucht" : "Noch offen"}</title></circle>
-    </g>`;
-  }).join("");
+function updateMapCityPoints() {
+  const features = germanyMapFeatures();
+  if (els.mapCount) els.mapCount.textContent = `${features.features.filter(feature => feature.properties.visited).length} / ${features.features.length}`;
+  if (!europeMapReady) return;
+  europeMap.getSource("german-cities")?.setData(features);
 }
 
-function renderAll() { updateStateCompletionDates(); renderOverview(); renderCities(); renderEurope(); renderStats(); }
+async function addGermanyCountryHighlight() {
+  try {
+    const [{ default: world }, { feature }] = await Promise.all([
+      import("https://esm.sh/@d3-maps/atlas@1.0.0/world/countries/countries-110m"),
+      import("https://esm.sh/topojson-client@3.1.0")
+    ]);
+    const germany = feature(world, world.objects.features).features.find(country => country.properties.id === "DEU");
+    if (!germany || europeMap.getSource("germany-highlight")) return;
+    europeMap.addSource("germany-highlight", { type: "geojson", data: germany });
+    europeMap.addLayer({
+      id: "germany-highlight-fill",
+      type: "fill",
+      source: "germany-highlight",
+      paint: { "fill-color": "#ffffff", "fill-opacity": 0.28 }
+    }, "german-city-points");
+    europeMap.addLayer({
+      id: "germany-highlight-outline",
+      type: "line",
+      source: "germany-highlight",
+      paint: { "line-color": "#ffffff", "line-width": 1.6, "line-opacity": 0.9 }
+    }, "german-city-points");
+  } catch (error) {
+    console.warn("Deutschland-Fläche konnte nicht geladen werden", error);
+  }
+}
+
+function initEuropeMap() {
+  if (europeMap || !window.maplibregl || !document.querySelector("#europeMap")) return;
+  try {
+    europeMap = new window.maplibregl.Map({
+      container: "europeMap",
+      style: "https://tiles.openfreemap.org/styles/dark",
+      center: [10.5, 50.5],
+      zoom: 3.45,
+      pitch: 38,
+      bearing: -10,
+      maxBounds: [[-16, 31], [39, 72]]
+    });
+    europeMap.addControl(new window.maplibregl.NavigationControl({ showCompass: true }), "top-right");
+    europeMap.on("load", () => {
+      europeMap.addSource("german-cities", { type: "geojson", data: germanyMapFeatures() });
+      europeMap.addLayer({
+        id: "german-city-points",
+        type: "circle",
+        source: "german-cities",
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 2.5, 6, 5.5, 9, 8],
+          "circle-color": ["case", ["boolean", ["get", "visited"], false], "#147d64", "#ffffff"],
+          "circle-stroke-width": 1.3,
+          "circle-stroke-color": ["case", ["boolean", ["get", "visited"], false], "#ffffff", "#111827"]
+        }
+      });
+      addGermanyCountryHighlight();
+      europeMap.on("click", "german-city-points", event => {
+        const cityId = event.features?.[0]?.properties?.id;
+        if (cityId) openCityDetail(cityId);
+      });
+      europeMap.on("mouseenter", "german-city-points", () => { europeMap.getCanvas().style.cursor = "pointer"; });
+      europeMap.on("mouseleave", "german-city-points", () => { europeMap.getCanvas().style.cursor = ""; });
+      europeMapReady = true;
+      updateMapCityPoints();
+    });
+  } catch (error) {
+    console.error("Karte konnte nicht gestartet werden", error);
+  }
+}
+
+function renderAll() { updateStateCompletionDates(); renderOverview(); renderCities(); renderEurope(); renderStats(); updateMapCityPoints(); }
 
 function populateStateFilter() {
   const states=[...new Set(cities.map(city=>city.state))].sort((a,b)=>a.localeCompare(b,"de"));
@@ -832,8 +903,10 @@ function openStateCities(state) {
 }
 
 function activateView(viewId) {
+  if (viewId === "mapView" && !isGermany()) applyCountry("de");
   document.querySelectorAll(".view").forEach(view=>view.classList.toggle("active",view.id===viewId));
   document.querySelectorAll(".nav-item").forEach(button=>button.classList.toggle("active",button.dataset.view===viewId));
+  if (viewId === "mapView") window.setTimeout(() => europeMap?.resize(), 50);
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
@@ -965,6 +1038,7 @@ document.querySelector("#resetButton").addEventListener("click",()=>{
 
 els.firstVisitDate.max=new Date().toISOString().slice(0,10);
 applyCountry(activeCountry);
+initEuropeMap();
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(()=>{});
 
 // Cloud, accounts and friends (Supabase)

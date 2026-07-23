@@ -10,12 +10,13 @@
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css">
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">VERSION 0.13 · EUROPA</p>
+        <p class="eyebrow">VERSION 0.15 · EUROPA-KARTE</p>
         <h1>Städtetracker</h1>
       </div>
       <div class="topbar-actions">
@@ -197,6 +198,23 @@
         </div>
       </section>
 
+      <section class="view" id="mapView" aria-labelledby="mapTitle">
+        <div class="section-heading sticky-heading">
+          <button class="back-button" data-nav-target="overviewView" aria-label="Zurück zur Übersicht">←</button>
+          <div>
+            <p class="section-kicker">Deutschland</p>
+            <h2 id="mapTitle">Städtekarte</h2>
+          </div>
+          <span class="result-count" id="mapCount">0</span>
+        </div>
+        <div class="map-card maplibre-card">
+          <div id="europeMap" aria-label="Interaktive Europa-Karte mit deutschen Städten"></div>
+        </div>
+        <div class="map-legend"><span><i class="map-legend-dot open"></i> Offen</span><span><i class="map-legend-dot visited"></i> Besucht</span></div>
+        <p class="map-help">Zoome mit zwei Fingern oder den Tasten. Tippe auf eine deutsche Stadt, um sie zu öffnen.</p>
+        <p class="data-credit">Karte © OpenFreeMap · © OpenStreetMap-Mitwirkende</p>
+      </section>
+
       <section class="view" id="statsView" aria-labelledby="statsTitle">
         <div class="section-heading">
           <button class="back-button" data-nav-target="overviewView" aria-label="Zurück zur Übersicht">←</button>
@@ -295,6 +313,10 @@
       <button class="nav-item" data-view="europeView">
         <span class="nav-icon">✦</span>
         <span>Europa</span>
+      </button>
+      <button class="nav-item" data-view="mapView">
+        <span class="nav-icon">⌖</span>
+        <span>Karte</span>
       </button>
       <button class="nav-item" data-view="statsView">
         <span class="nav-icon">▥</span>
@@ -538,6 +560,8 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+  <script src="germany-city-coordinates.js"></script>
   <script src="france-cities.js"></script>
   <script src="app.js"></script>
 </body>
