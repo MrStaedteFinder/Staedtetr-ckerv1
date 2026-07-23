@@ -1,7 +1,7 @@
 {
   "name": "Städtetracker",
   "short_name": "Städte",
-  "description": "Markiere besuchte deutsche Städte, entdecke sie auf der Karte und sammle Abzeichen.",
+  "description": "Sammle alle deutschen Städte ab 50.000 Einwohnern – mit mindestens zehn Städten je Flächenland.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f3f4f6",

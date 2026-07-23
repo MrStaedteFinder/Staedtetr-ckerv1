@@ -1,20 +1,25 @@
-# Städtetracker – Version 0.7
+# Städtetracker – Version 0.8
 
-Kostenlose lokale Web-App für alle deutschen Städte ab 20.000 Einwohnern.
+Installierbare Web-App zum Sammeln besuchter deutscher Städte.
 
-## Neu in Version 0.7
+## Auswahlregel
 
-- Benutzerkonten mit Cloud-Synchronisierung
-- Freundschaftsanfragen und Freundesliste
-- Rangliste für angemeldete Nutzer
-- vollständige Städteliste aus der Destatis-Datei, gefiltert auf mindestens 20.000 Einwohner
+- grundsätzlich alle deutschen Städte ab 50.000 Einwohnern
+- jedes der 13 Flächenländer enthält mindestens seine zehn größten Städte
+- hat ein Flächenland weniger als zehn Städte ab 50.000 Einwohnern, werden die nächstgrößeren Städte ergänzt
+- kleinere Städte außerhalb dieser Top Ten sind nicht Teil der Challenge
+- Berlin, Hamburg und Bremen werden als Stadtstaaten separat behandelt und nicht künstlich aufgefüllt
+
+## Neu in Version 0.8
+
+- Karte entfernt
+- Startseite auf Großstädte und Mittelstädte reduziert
+- Mittelstädte umfassen alle enthaltenen Städte unter 100.000 Einwohnern
+- Einwohnerzahlen bei den größten offenen Städten
+- getrennte, anklickbare Ranglisten für 13 Flächenländer und 3 Stadtstaaten
+- Abzeichen „Erste Stadt“ und „Auf Tour“ entfernt
+- Auswahlregel direkt in der App erklärt
 
 ## Daten
 
-- Einwohnerzahlen und Städteliste: Statistisches Bundesamt, Stand 31. Dezember 2024
-- Bestehende Stadtkoordinaten: GeoNames-Daten, bereitgestellt über das Projekt `joelacus/world-cities`, CC BY 4.0
-- Kartengrundlage: Natural Earth, Public Domain
-
-## Speicherung
-
-Besuche und Erstbesuchsdaten werden ausschließlich lokal im Browser gespeichert. Ohne Export oder Konto werden die Daten nicht zwischen Geräten synchronisiert.
+Einwohnerzahlen und Städteliste: Statistisches Bundesamt, Stand 31. Dezember 2024.

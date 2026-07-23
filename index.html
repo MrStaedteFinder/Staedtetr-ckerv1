@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111827">
-  <meta name="description" content="Markiere alle besuchten deutschen Städte ab 20.000 Einwohnern.">
+  <meta name="description" content="Sammle alle deutschen Städte ab 50.000 Einwohnern – mit mindestens zehn Städten je Flächenland.">
   <title>Städtetracker</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
@@ -15,7 +15,7 @@
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">VERSION 0.7 · MIT FREUNDEN</p>
+        <p class="eyebrow">VERSION 0.8 · DEUTSCHLAND-CHALLENGE</p>
         <h1>Städtetracker</h1>
       </div>
       <div class="topbar-actions">
@@ -46,14 +46,15 @@
           <article class="summary-card">
             <p>Mittelstädte</p>
             <strong id="midSummary">0 / 0</strong>
-            <small>50.000–99.999 Einwohner</small>
-          </article>
-          <article class="summary-card">
-            <p>Kleinstädte</p>
-            <strong id="smallSummary">0 / 0</strong>
-            <small>20.000–49.999 Einwohner</small>
+            <small>unter 100.000 Einwohnern</small>
           </article>
         </div>
+
+        <section class="criteria-card" aria-labelledby="criteriaTitle">
+          <p class="section-kicker">Welche Städte zählen?</p>
+          <h3 id="criteriaTitle">50.000+ und mindestens zehn je Flächenland</h3>
+          <p>Enthalten sind grundsätzlich alle deutschen Städte ab 50.000 Einwohnern. Hat eines der 13 Flächenländer weniger als zehn davon, wird es mit seinen nächstgrößeren Städten bis auf insgesamt zehn aufgefüllt. Weitere kleinere Städte außerhalb dieser Top Ten sind nicht Teil der Challenge. Die drei Stadtstaaten Berlin, Hamburg und Bremen werden nicht künstlich aufgefüllt.</p>
+        </section>
 
         <section class="section-block">
           <div class="section-heading">
@@ -111,7 +112,6 @@
                 <option value="all">Alle Kategorien</option>
                 <option value="metro">Großstädte</option>
                 <option value="mid">Mittelstädte</option>
-                <option value="small">Kleinstädte</option>
               </select>
             </label>
             <label>
@@ -130,32 +130,6 @@
           <strong>Keine Stadt gefunden</strong>
           <p>Ändere die Suche oder deine Filter.</p>
         </div>
-      </section>
-
-
-      <section class="view" id="mapView" aria-labelledby="mapTitle">
-        <div class="section-heading">
-          <div>
-            <p class="section-kicker">Deutschland</p>
-            <h2 id="mapTitle">Karte</h2>
-          </div>
-          <span class="result-count" id="mapVisitedCount">0 / 0</span>
-        </div>
-
-        <div class="map-legend" aria-label="Kartenlegende">
-          <span><i class="legend-dot visited"></i> Besucht</span>
-          <span><i class="legend-dot open"></i> Noch offen</span>
-          <span><i class="legend-dot capital"></i> Landeshauptstadt</span>
-        </div>
-
-        <div class="map-card">
-          <svg id="germanyMap" class="germany-map" viewBox="0 0 520 680" role="img" aria-label="Deutschlandkarte mit Städten, für die Koordinaten vorliegen">
-            <path class="map-country" d="M 438.09 128.73 L 449.58 169.19 L 435.87 190.42 L 453.73 218.76 L 465.90 261.29 L 462.07 288.70 L 482.24 339.47 L 460.28 347.77 L 447.31 338.63 L 434.97 353.76 L 399.64 369.16 L 381.37 388.97 L 345.61 406.29 L 354.23 429.92 L 359.43 463.45 L 384.54 482.56 L 412.32 516.74 L 394.97 553.40 L 377.30 563.50 L 384.27 615.30 L 379.69 628.82 L 364.34 612.54 L 340.75 610.10 L 305.58 624.35 L 262.19 620.96 L 255.18 641.95 L 230.29 619.87 L 215.44 624.25 L 162.71 599.94 L 152.61 617.21 L 110.76 616.66 L 117.01 560.01 L 141.88 505.56 L 70.98 490.92 L 47.77 470.10 L 50.54 435.24 L 40.72 417.28 L 46.31 363.56 L 38.04 280.24 L 67.60 280.20 L 80.07 250.28 L 92.33 177.47 L 83.13 150.59 L 92.74 133.75 L 133.86 129.43 L 142.99 146.96 L 176.40 107.76 L 165.15 77.96 L 162.89 32.86 L 200.08 43.35 L 231.56 31.25 L 232.43 61.97 L 282.15 80.50 L 281.62 108.72 L 331.65 93.79 L 359.31 72.01 L 414.86 103.41 L 438.09 128.73 Z"></path>
-            <g id="mapCities"></g>
-          </svg>
-        </div>
-        <p class="map-help">Die Karte zeigt derzeit Städte mit hinterlegten Koordinaten. Alle Städte ab 20.000 Einwohnern findest du in der Liste.</p>
-        <p class="data-credit">Kartengrundlage: Natural Earth · Koordinaten: GeoNames</p>
       </section>
 
       <section class="view" id="statsView" aria-labelledby="statsTitle">
@@ -211,10 +185,23 @@
           <div class="section-heading">
             <div>
               <p class="section-kicker">Rangliste</p>
-              <h3>Bundesländer</h3>
+              <h3>Flächenländer</h3>
             </div>
+            <span class="result-count">13</span>
           </div>
-          <div id="stateRanking" class="ranking-list"></div>
+          <p class="ranking-hint">Nach Fortschritt sortiert. Tippe auf ein Bundesland, um seine Städte und deinen genauen Fortschritt zu sehen.</p>
+          <div id="areaStateRanking" class="ranking-list"></div>
+        </section>
+
+        <section class="section-block">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Separate Rangliste</p>
+              <h3>Stadtstaaten</h3>
+            </div>
+            <span class="result-count">3</span>
+          </div>
+          <div id="cityStateRanking" class="ranking-list"></div>
         </section>
 
         <section class="section-block danger-zone">
@@ -233,10 +220,6 @@
       <button class="nav-item" data-view="citiesView">
         <span class="nav-icon">◎</span>
         <span>Städte</span>
-      </button>
-      <button class="nav-item" data-view="mapView">
-        <span class="nav-icon">◇</span>
-        <span>Karte</span>
       </button>
       <button class="nav-item" data-view="statsView">
         <span class="nav-icon">▥</span>
@@ -258,6 +241,10 @@
       <div class="rule-grid">
         <div class="rule yes"><strong>Zählt</strong><span>Du warst draußen in der Stadt.</span></div>
         <div class="rule no"><strong>Zählt nicht</strong><span>Nur durchgefahren, umgestiegen oder ausschließlich im Bahnhof beziehungsweise Flughafen geblieben.</span></div>
+      </div>
+      <div class="rule selection-rule">
+        <strong>Städteauswahl</strong>
+        <span>Alle Städte ab 50.000 Einwohnern. Flächenländer mit weniger als zehn werden mit ihren nächstgrößeren Städten bis auf zehn ergänzt.</span>
       </div>
       <button class="primary-button" value="close">Verstanden</button>
     </form>

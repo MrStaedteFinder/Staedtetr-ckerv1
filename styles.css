@@ -798,3 +798,78 @@ dialog::backdrop { background: rgba(17,24,39,.48); backdrop-filter: blur(4px); }
 .account-row small { color: var(--muted); font-size: .75rem; }
 .account-row .secondary-button { padding: 7px 10px; font-size: .76rem; }
 @media (max-width: 390px) { .account-button { padding: 7px 9px; } }
+
+
+/* Version 0.8 – neue Deutschland-Challenge */
+.summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.criteria-card {
+  margin-top: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.criteria-card h3 {
+  margin-bottom: 8px;
+  letter-spacing: -.025em;
+}
+
+.criteria-card > p:last-child {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: .88rem;
+  line-height: 1.55;
+}
+
+.bottom-nav {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ranking-hint {
+  margin: -4px 0 12px;
+  color: var(--muted);
+  font-size: .8rem;
+  line-height: 1.45;
+}
+
+.ranking-link {
+  width: 100%;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.ranking-link:hover {
+  transform: translateY(-1px);
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 24px rgba(17,24,39,.06);
+}
+
+.ranking-link:focus-visible {
+  outline: 3px solid rgba(17,24,39,.15);
+  outline-offset: 2px;
+}
+
+.ranking-link .ranking-row-header span b {
+  display: inline-block;
+  margin-left: 4px;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.selection-rule {
+  margin: 0 0 18px;
+  background: #f3f4f6;
+}
+
+@media (max-width: 390px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
