@@ -15,7 +15,7 @@
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">VERSION 0.10 · DEUTSCHLAND & EUROPA</p>
+        <p class="eyebrow">VERSION 0.12 · MIT FREUNDEN</p>
         <h1>Städtetracker</h1>
       </div>
       <div class="topbar-actions">
@@ -500,10 +500,15 @@
           <div><strong id="accountName"></strong><small id="cloudStatus">Fortschritt wird gespeichert</small></div>
           <strong class="profile-score" id="profileScore">0</strong>
         </div>
+        <div id="inviteBanner" class="invite-banner hidden">
+          <div><strong id="inviteTitle">Freundschaftseinladung</strong><small id="inviteText"></small></div>
+          <button id="acceptInviteButton" class="primary-button" type="button">Anfrage senden</button>
+        </div>
         <section class="account-section">
           <div class="section-heading"><div><p class="section-kicker">Gemeinsam sammeln</p><h3>Freund hinzufügen</h3></div></div>
           <form id="friendForm" class="inline-form"><input id="friendUsername" type="text" placeholder="Nutzername eingeben" required><button class="primary-button" type="submit">Hinzufügen</button></form>
           <p class="form-hint" id="friendHint"></p>
+          <button class="share-invite-button" id="shareInviteButton" type="button">Freund per Link einladen</button>
         </section>
         <section class="account-section">
           <div class="section-heading"><div><p class="section-kicker">Deine Gruppe</p><h3>Freunde</h3></div></div>

@@ -911,6 +911,8 @@ let cloudUser = null;
 let registering = false;
 let cloudSessionReady = false;
 let cloudSyncInFlight = false;
+let friendUserIds = new Set();
+let invitedProfile = null;
 
 const accountEls = {
   dialog: document.querySelector("#accountDialog"), button: document.querySelector("#accountButton"),
@@ -925,6 +927,9 @@ const accountEls = {
   friendList: document.querySelector("#friendList"), leaderboard: document.querySelector("#leaderboardList"),
   cloudStatus: document.querySelector("#cloudStatus"), profileAvatar: document.querySelector("#profileAvatar"),
   profileScore: document.querySelector("#profileScore"),
+  inviteBanner: document.querySelector("#inviteBanner"), inviteTitle: document.querySelector("#inviteTitle"),
+  inviteText: document.querySelector("#inviteText"), acceptInvite: document.querySelector("#acceptInviteButton"),
+  shareInvite: document.querySelector("#shareInviteButton"),
   signOut: document.querySelector("#signOutButton")
 };
 
@@ -1072,6 +1077,9 @@ async function loadFriends() {
   const ids = [...new Set(friendships.flatMap(item => [item.requester_id, item.addressee_id]))];
   const { data: profiles } = await supabaseClient.from("profiles").select("id, username, display_name").in("id", ids);
   const people = new Map((profiles || []).map(profile => [profile.id, profile]));
+  friendUserIds = new Set(friendships
+    .filter(friendship => friendship.status === "accepted")
+    .map(friendship => friendship.requester_id === cloudUser.id ? friendship.addressee_id : friendship.requester_id));
   accountEls.friendList.innerHTML = friendships.map(friendship => {
     const incoming = friendship.addressee_id === cloudUser.id;
     const other = people.get(incoming ? friendship.requester_id : friendship.addressee_id);
@@ -1089,20 +1097,69 @@ async function loadLeaderboard() {
     accountEls.leaderboard.innerHTML = '<p class="form-hint">Die Rangliste wird gerade eingerichtet.</p>';
     return;
   }
-  accountEls.leaderboard.innerHTML = data.length ? data.map((row, index) =>
-    `<div class="account-row"><span><strong>${index + 1}. ${escapeHtml(row.display_name || row.username)}</strong><small>${row.visited_count} Städte</small></span></div>`
-  ).join("") : '<p class="form-hint">Noch keine Einträge.</p>';
+  const group = data
+    .filter(row => row.user_id === cloudUser.id || friendUserIds.has(row.user_id))
+    .sort((a, b) => b.visited_count - a.visited_count || String(a.username).localeCompare(String(b.username), "de"));
+  accountEls.leaderboard.innerHTML = group.length ? group.map((row, index) =>
+    `<div class="account-row leaderboard-row ${row.user_id === cloudUser.id ? "is-me" : ""}"><span class="rank-badge">${index + 1}</span><span><strong>${escapeHtml(row.display_name || row.username)}${row.user_id === cloudUser.id ? " (Du)" : ""}</strong><small>${row.visited_count} Städte gesammelt</small></span></div>`
+  ).join("") : '<p class="form-hint">Lade deinen ersten Freund ein und starte eure Rangliste.</p>';
 }
 
 async function openAccountDialog() {
   renderAuthState();
   accountEls.dialog.showModal();
-  if (cloudUser) { await loadFriends(); await loadLeaderboard(); }
+  if (cloudUser) { await loadFriends(); await loadLeaderboard(); await showInviteIfPresent(); }
+}
+
+function ownUsername() {
+  return cloudUser?.user_metadata?.username || cloudUser?.email?.split("@")[0] || "";
+}
+
+async function shareFriendInvite() {
+  const username = ownUsername();
+  if (!username) return;
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set("invite", username);
+  const text = `Komm in meine Städtetracker-Gruppe und wir vergleichen unsere Städte: ${url}`;
+  try {
+    if (navigator.share) await navigator.share({ title: "Städtetracker", text, url: url.toString() });
+    else await navigator.clipboard.writeText(url.toString());
+    accountEls.friendHint.textContent = navigator.share ? "Einladungslink geteilt." : "Einladungslink kopiert – schick ihn z. B. per WhatsApp.";
+  } catch (error) {
+    if (error?.name !== "AbortError") accountEls.friendHint.textContent = "Link konnte gerade nicht geteilt werden.";
+  }
+}
+
+async function showInviteIfPresent() {
+  const username = new URLSearchParams(window.location.search).get("invite")?.trim().toLowerCase();
+  if (!username || !cloudUser || username === ownUsername()) return;
+  const { data, error } = await supabaseClient.from("profiles").select("id, username, display_name").eq("username", username).maybeSingle();
+  if (error || !data) return;
+  invitedProfile = data;
+  accountEls.inviteTitle.textContent = `${data.display_name || data.username} lädt dich ein`;
+  accountEls.inviteText.textContent = "Sende eine Freundschaftsanfrage und vergleicht euren Fortschritt in einer gemeinsamen Rangliste.";
+  accountEls.inviteBanner.classList.remove("hidden");
+}
+
+async function acceptInvite() {
+  if (!cloudUser || !invitedProfile) return;
+  const { error } = await supabaseClient.from("friendships").insert({ requester_id: cloudUser.id, addressee_id: invitedProfile.id });
+  if (error) { accountEls.inviteText.textContent = cloudError(error); return; }
+  accountEls.inviteText.textContent = "Anfrage gesendet. Sobald sie angenommen wurde, erscheint die Person in deiner Rangliste.";
+  accountEls.acceptInvite.disabled = true;
+  loadFriends();
+  const url = new URL(window.location.href);
+  url.searchParams.delete("invite");
+  window.history.replaceState({}, "", url);
 }
 
 accountEls.button.addEventListener("click", openAccountDialog);
 accountEls.close.addEventListener("click", () => accountEls.dialog.close());
 accountEls.mode.addEventListener("click", () => { registering = !registering; renderAuthState(); });
+accountEls.shareInvite.addEventListener("click", shareFriendInvite);
+accountEls.acceptInvite.addEventListener("click", acceptInvite);
 accountEls.form.addEventListener("submit", async event => {
   event.preventDefault();
   const email = accountEls.email.value.trim();
@@ -1147,6 +1204,7 @@ async function applyCloudSession(session) {
   try {
     await ensureProfile();
     await syncCloudProgress();
+    if (new URLSearchParams(window.location.search).has("invite") && !accountEls.dialog.open) await openAccountDialog();
   } catch (error) {
     console.error("Cloud startup failed", error);
     setCloudStatus("Offline – wird später synchronisiert", "offline");
