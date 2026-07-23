@@ -510,19 +510,35 @@
     <div class="dialog-card account-dialog-card">
       <div class="dialog-header">
         <div>
-          <p class="section-kicker">Dein Profil</p>
+          <p class="section-kicker">Freunde &amp; Profil</p>
           <h2 id="accountTitle">Anmelden</h2>
         </div>
         <button type="button" class="icon-button" id="closeAccountDialog" aria-label="Schließen">×</button>
       </div>
 
       <div id="authPanel">
-        <p class="detail-meta">Melde dich an, damit dein Fortschritt gesichert wird und du Freunde hinzufügen kannst.</p>
+        <p class="account-intro">
+          Ein Konto ist nur für Cloud-Sicherung, Freunde und die gemeinsame Rangliste nötig.
+          Die Städte- und Hauptstädte-Challenges bleiben auch ohne Anmeldung nutzbar.
+        </p>
+
         <form id="authForm" class="account-form">
-          <label><span>E-Mail</span><input id="authEmail" type="email" autocomplete="email" required></label>
-          <label><span>Passwort</span><input id="authPassword" type="password" minlength="6" autocomplete="current-password" required></label>
-          <label id="signupNameField"><span>Dein Nutzername</span><input id="authUsername" type="text" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+" placeholder="z. B. dominik" autocomplete="username"></label>
+          <label>
+            <span>E-Mail</span>
+            <input id="authEmail" type="email" autocomplete="email" required>
+          </label>
+          <label>
+            <span>Passwort</span>
+            <input id="authPassword" type="password" minlength="6" autocomplete="current-password" required>
+          </label>
+          <label id="signupNameField">
+            <span>Dein Nutzername</span>
+            <input id="authUsername" type="text" minlength="3" maxlength="24"
+              pattern="[A-Za-z0-9_]+" placeholder="z. B. stadtfan" autocomplete="username">
+          </label>
+
           <p class="form-hint" id="authHint">Noch kein Konto? Wähle „Konto erstellen“.</p>
+
           <div class="dialog-actions">
             <button class="secondary-button" type="button" id="authModeButton">Konto erstellen</button>
             <button class="primary-button" type="submit" id="authSubmitButton">Anmelden</button>
@@ -532,29 +548,97 @@
 
       <div id="accountPanel" class="hidden">
         <div class="profile-card">
-          <span class="profile-avatar" id="profileAvatar">S</span>
-          <div><strong id="accountName"></strong><small id="cloudStatus">Fortschritt wird gespeichert</small></div>
+          <span class="profile-avatar" id="profileAvatar" aria-hidden="true">S</span>
+          <div class="profile-copy">
+            <strong id="accountName"></strong>
+            <small id="cloudStatus">Fortschritt wird mit der Cloud abgeglichen</small>
+          </div>
           <strong class="profile-score" id="profileScore">0</strong>
         </div>
+
+        <div class="friend-score-grid" aria-label="Dein Challenge-Fortschritt">
+          <article class="friend-score-card">
+            <span>Deutschland</span>
+            <strong id="profileGermanyScore">0 / 0</strong>
+          </article>
+          <article class="friend-score-card">
+            <span>Europäische Hauptstädte</span>
+            <strong id="profileEuropeScore">0 / 48</strong>
+          </article>
+        </div>
+
         <div id="inviteBanner" class="invite-banner hidden">
-          <div><strong id="inviteTitle">Freundschaftseinladung</strong><small id="inviteText"></small></div>
+          <div>
+            <strong id="inviteTitle">Freundschaftseinladung</strong>
+            <small id="inviteText"></small>
+          </div>
           <button id="acceptInviteButton" class="primary-button" type="button">Anfrage senden</button>
         </div>
-        <section class="account-section">
-          <div class="section-heading"><div><p class="section-kicker">Gemeinsam sammeln</p><h3>Freund hinzufügen</h3></div></div>
-          <form id="friendForm" class="inline-form"><input id="friendUsername" type="text" placeholder="Nutzername eingeben" required><button class="primary-button" type="submit">Hinzufügen</button></form>
-          <p class="form-hint" id="friendHint"></p>
-          <button class="share-invite-button" id="shareInviteButton" type="button">Freund per Link einladen</button>
+
+        <section class="account-section" aria-labelledby="inviteFriendsTitle">
+          <div class="account-section-heading">
+            <div>
+              <p class="section-kicker">Gemeinsam sammeln</p>
+              <h3 id="inviteFriendsTitle">Freund hinzufügen</h3>
+            </div>
+          </div>
+          <p class="account-section-copy">
+            Suche nach einem Nutzernamen oder teile einen Link, über den man dich direkt hinzufügen kann.
+          </p>
+
+          <form id="friendForm" class="inline-form">
+            <input id="friendUsername" type="text" placeholder="Nutzername suchen"
+              autocomplete="off" required aria-label="Nutzername eines Freundes">
+            <button class="primary-button" type="submit">Anfrage senden</button>
+          </form>
+          <p class="form-hint" id="friendHint" aria-live="polite"></p>
+          <button class="share-invite-button" id="shareInviteButton" type="button">
+            Einladungslink teilen
+          </button>
         </section>
-        <section class="account-section">
-          <div class="section-heading"><div><p class="section-kicker">Deine Gruppe</p><h3>Freunde</h3></div></div>
-          <div id="friendList" class="account-list"></div>
+
+        <section class="account-section" aria-labelledby="friendsListTitle">
+          <div class="account-section-heading">
+            <div>
+              <p class="section-kicker">Deine Gruppe</p>
+              <h3 id="friendsListTitle">Freunde &amp; Anfragen</h3>
+            </div>
+          </div>
+          <p class="account-section-copy">
+            Angenommene Freunde sowie offene und gesendete Anfragen erscheinen gemeinsam in dieser Liste.
+          </p>
+          <div id="friendList" class="account-list" aria-live="polite"></div>
         </section>
-        <section class="account-section">
-          <div class="section-heading"><div><p class="section-kicker">Alle Challenges</p><h3>Rangliste</h3></div></div>
-          <div id="leaderboardList" class="account-list"></div>
+
+        <section class="account-section" aria-labelledby="leaderboardTitle">
+          <div class="account-section-heading">
+            <div>
+              <p class="section-kicker">Deutschland-Challenge</p>
+              <h3 id="leaderboardTitle">Freunde-Rangliste</h3>
+            </div>
+          </div>
+          <p class="account-section-copy">
+            Gewertet wird die Zahl besuchter deutscher Städte. Besuchsdaten und genaue Reisedaten bleiben privat.
+          </p>
+          <div id="leaderboardList" class="account-list" aria-live="polite"></div>
+
+          <div class="privacy-note">
+            <span aria-hidden="true">🔒</span>
+            <span><strong>Privatsphäre:</strong> Freunde sehen nur deinen Nutzernamen und deinen Gesamtfortschritt.</span>
+          </div>
         </section>
-        <button class="secondary-button" id="signOutButton" type="button">Abmelden</button>
+
+        <section class="account-section" aria-labelledby="accountActionsTitle">
+          <div class="account-section-heading">
+            <div>
+              <p class="section-kicker">Konto</p>
+              <h3 id="accountActionsTitle">Kontoeinstellungen</h3>
+            </div>
+          </div>
+          <div class="account-actions">
+            <button class="secondary-button" id="signOutButton" type="button">Abmelden</button>
+          </div>
+        </section>
       </div>
     </div>
   </dialog>

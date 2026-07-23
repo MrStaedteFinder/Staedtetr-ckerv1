@@ -1064,7 +1064,8 @@ const accountEls = {
   friendUsername: document.querySelector("#friendUsername"), friendHint: document.querySelector("#friendHint"),
   friendList: document.querySelector("#friendList"), leaderboard: document.querySelector("#leaderboardList"),
   cloudStatus: document.querySelector("#cloudStatus"), profileAvatar: document.querySelector("#profileAvatar"),
-  profileScore: document.querySelector("#profileScore"),
+  profileScore: document.querySelector("#profileScore"), profileGermanyScore: document.querySelector("#profileGermanyScore"),
+  profileEuropeScore: document.querySelector("#profileEuropeScore"),
   inviteBanner: document.querySelector("#inviteBanner"), inviteTitle: document.querySelector("#inviteTitle"),
   inviteText: document.querySelector("#inviteText"), acceptInvite: document.querySelector("#acceptInviteButton"),
   shareInvite: document.querySelector("#shareInviteButton"),
@@ -1080,12 +1081,26 @@ function cloudError(error, fallback = "Das hat gerade nicht funktioniert.") {
   return error?.message || fallback;
 }
 
+function updateAccountSummary() {
+  if (!cloudUser) return;
+  const name = cloudUser.user_metadata?.username || cloudUser.email || "";
+  const germanyVisited = germanyCities.filter(city => visited.has(city.id)).length;
+  const germanyTotal = germanyCities.length;
+  const capitalsVisited = europeVisited.size;
+
+  accountEls.accountName.textContent = name;
+  accountEls.profileAvatar.textContent = (name.trim()[0] || "S").toUpperCase();
+  accountEls.profileScore.textContent = germanyVisited;
+  if (accountEls.profileGermanyScore) accountEls.profileGermanyScore.textContent = `${germanyVisited} / ${germanyTotal}`;
+  if (accountEls.profileEuropeScore) accountEls.profileEuropeScore.textContent = `${capitalsVisited} / ${europeanCapitals.length}`;
+}
+
 function renderAuthState() {
   const signedIn = Boolean(cloudUser);
   accountEls.button.textContent = signedIn ? "Freunde" : "Anmelden";
   accountEls.authPanel.classList.toggle("hidden", signedIn);
   accountEls.accountPanel.classList.toggle("hidden", !signedIn);
-  accountEls.title.textContent = signedIn ? "Dein Konto" : (registering ? "Konto erstellen" : "Anmelden");
+  accountEls.title.textContent = signedIn ? "Freunde & Profil" : (registering ? "Konto erstellen" : "Anmelden");
   accountEls.signupNameField.classList.toggle("hidden", !registering);
   accountEls.username.required = registering;
   accountEls.submit.textContent = registering ? "Konto erstellen" : "Anmelden";
@@ -1093,12 +1108,7 @@ function renderAuthState() {
   accountEls.hint.textContent = registering
     ? "Nach der Registrierung bestätigst du gegebenenfalls deine E-Mail."
     : "Noch kein Konto? Erstelle eins kostenlos.";
-  if (signedIn) {
-    const name = cloudUser.user_metadata?.username || cloudUser.email;
-    accountEls.accountName.textContent = name;
-    accountEls.profileAvatar.textContent = name.slice(0, 1).toUpperCase();
-    accountEls.profileScore.textContent = cities.filter(city => visited.has(city.id)).length;
-  }
+  if (signedIn) updateAccountSummary();
 }
 
 function setCloudStatus(text, state = "ready") {
@@ -1151,6 +1161,7 @@ async function syncCloudProgress() {
     if (row.first_visit) visitDetails[row.city_id] = { firstVisit: row.first_visit };
   });
   saveData(); saveEurope(); renderAll();
+  updateAccountSummary();
   setCloudStatus("Fortschritt sicher gespeichert", "ready");
   } catch (error) {
     console.error("Cloud sync failed", error);
@@ -1209,44 +1220,94 @@ async function clearCloudVisits() {
 
 async function loadFriends() {
   if (!cloudUser) return;
+  accountEls.friendList.innerHTML = '<div class="account-empty">Freunde und Anfragen werden geladen …</div>';
+
   const { data: friendships, error } = await supabaseClient.from("friendships").select("id, requester_id, addressee_id, status");
-  if (error) { accountEls.friendList.textContent = cloudError(error); return; }
-  if (!friendships.length) { accountEls.friendList.innerHTML = '<p class="form-hint">Noch keine Freunde hinzugefügt.</p>'; return; }
+  if (error) {
+    accountEls.friendList.innerHTML = `<div class="account-empty">${escapeHtml(cloudError(error))}</div>`;
+    return;
+  }
+  if (!friendships.length) {
+    friendUserIds = new Set();
+    accountEls.friendList.innerHTML = '<div class="account-empty">Noch keine Freunde oder offenen Anfragen.</div>';
+    return;
+  }
+
   const ids = [...new Set(friendships.flatMap(item => [item.requester_id, item.addressee_id]))];
   const { data: profiles } = await supabaseClient.from("profiles").select("id, username, display_name").in("id", ids);
   const people = new Map((profiles || []).map(profile => [profile.id, profile]));
   friendUserIds = new Set(friendships
     .filter(friendship => friendship.status === "accepted")
     .map(friendship => friendship.requester_id === cloudUser.id ? friendship.addressee_id : friendship.requester_id));
+
   accountEls.friendList.innerHTML = friendships.map(friendship => {
     const incoming = friendship.addressee_id === cloudUser.id;
     const other = people.get(incoming ? friendship.requester_id : friendship.addressee_id);
-    const name = escapeHtml(other?.display_name || other?.username || "Unbekannt");
-    const status = friendship.status === "accepted" ? "Freund" : incoming ? "Anfrage erhalten" : "Anfrage gesendet";
-    const action = incoming && friendship.status === "pending" ? `<button class="secondary-button friend-accept" data-friend-id="${friendship.id}">Annehmen</button>` : "";
-    return `<div class="account-row"><span><strong>${name}</strong><small>${status}</small></span>${action}</div>`;
+    const rawName = other?.display_name || other?.username || "Unbekannt";
+    const name = escapeHtml(rawName);
+    const initial = escapeHtml((rawName.trim()[0] || "?").toUpperCase());
+    const status = friendship.status === "accepted"
+      ? "Freund"
+      : incoming ? "Anfrage erhalten" : "Anfrage gesendet";
+    const action = incoming && friendship.status === "pending"
+      ? `<button class="secondary-button friend-accept" data-friend-id="${friendship.id}">Annehmen</button>`
+      : `<span class="status-pill ${friendship.status === "accepted" ? "visited" : "open"}">${status}</span>`;
+
+    return `
+      <div class="account-row">
+        <span class="account-row-avatar" aria-hidden="true">${initial}</span>
+        <span class="account-row-main">
+          <strong>${name}</strong>
+          <small>${status}</small>
+        </span>
+        ${action}
+      </div>`;
   }).join("");
 }
 
 async function loadLeaderboard() {
   if (!cloudUser) return;
+  accountEls.leaderboard.innerHTML = '<div class="account-empty">Rangliste wird geladen …</div>';
+
   const { data, error } = await supabaseClient.rpc("leaderboard");
   if (error) {
-    accountEls.leaderboard.innerHTML = '<p class="form-hint">Die Rangliste wird gerade eingerichtet.</p>';
+    accountEls.leaderboard.innerHTML = '<div class="account-empty">Die Rangliste wird gerade eingerichtet.</div>';
     return;
   }
+
   const group = data
     .filter(row => row.user_id === cloudUser.id || friendUserIds.has(row.user_id))
     .sort((a, b) => b.visited_count - a.visited_count || String(a.username).localeCompare(String(b.username), "de"));
-  accountEls.leaderboard.innerHTML = group.length ? group.map((row, index) =>
-    `<div class="account-row leaderboard-row ${row.user_id === cloudUser.id ? "is-me" : ""}"><span class="rank-badge">${index + 1}</span><span><strong>${escapeHtml(row.display_name || row.username)}${row.user_id === cloudUser.id ? " (Du)" : ""}</strong><small>${row.visited_count} Städte gesammelt</small></span></div>`
-  ).join("") : '<p class="form-hint">Lade deinen ersten Freund ein und starte eure Rangliste.</p>';
+
+  if (!group.length) {
+    accountEls.leaderboard.innerHTML = '<div class="account-empty">Lade deinen ersten Freund ein und startet eure Rangliste.</div>';
+    return;
+  }
+
+  accountEls.leaderboard.innerHTML = group.map((row, index) => {
+    const isMe = row.user_id === cloudUser.id;
+    const topThree = index < 3 ? " top-three" : "";
+    return `
+      <div class="account-row leaderboard-row${isMe ? " is-me" : ""}">
+        <span class="rank-badge${topThree}">${index + 1}</span>
+        <span class="account-row-main">
+          <strong>${escapeHtml(row.display_name || row.username)}${isMe ? " · Du" : ""}</strong>
+          <small>Deutschland-Challenge</small>
+        </span>
+        <strong class="leaderboard-score">${row.visited_count} Städte</strong>
+      </div>`;
+  }).join("");
 }
 
 async function openAccountDialog() {
   renderAuthState();
   accountEls.dialog.showModal();
-  if (cloudUser) { await loadFriends(); await loadLeaderboard(); await showInviteIfPresent(); }
+  if (cloudUser) {
+    updateAccountSummary();
+    await loadFriends();
+    await loadLeaderboard();
+    await showInviteIfPresent();
+  }
 }
 
 function ownUsername() {

@@ -1177,3 +1177,378 @@ dialog::backdrop { background: rgba(17,24,39,.48); backdrop-filter: blur(4px); }
 
 /* Version 0.14 – Europa-Karte */
 .bottom-nav { grid-template-columns: repeat(5, 1fr); }
+
+/* Freunde-Menü – überarbeitete Profil-, Einladungs- und Ranglistenansicht */
+.account-dialog {
+  width: min(calc(100% - 24px), 640px);
+}
+
+.account-dialog-card {
+  max-height: min(90vh, 900px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 22px;
+  background: var(--surface);
+}
+
+.account-dialog-card .dialog-header {
+  position: sticky;
+  top: -22px;
+  z-index: 3;
+  margin: -22px -22px 0;
+  padding: 22px 22px 14px;
+  background: rgba(255, 255, 255, .95);
+  border-bottom: 1px solid rgba(229, 231, 235, .8);
+  backdrop-filter: blur(16px);
+}
+
+.account-intro {
+  margin: 4px 0 18px;
+  padding: 14px 15px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: .84rem;
+  line-height: 1.5;
+}
+
+.profile-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  padding: 16px;
+  margin-top: 6px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #111827, #1f2937);
+  color: #fff;
+  box-shadow: 0 14px 32px rgba(17, 24, 39, .18);
+}
+
+.profile-avatar,
+.account-row-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.profile-avatar {
+  width: 46px;
+  height: 46px;
+  background: var(--success);
+  color: #fff;
+  font-size: 1rem;
+}
+
+.profile-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.profile-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-copy small {
+  color: #d1d5db;
+  font-size: .75rem;
+}
+
+.profile-score {
+  min-width: 58px;
+  text-align: center;
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.profile-score::after {
+  content: "Städte";
+  display: block;
+  margin-top: 5px;
+  color: #d1d5db;
+  font-size: .62rem;
+  font-weight: 750;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.friend-score-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.friend-score-card {
+  padding: 13px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.friend-score-card span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: .72rem;
+  font-weight: 750;
+}
+
+.friend-score-card strong {
+  font-size: 1.08rem;
+}
+
+.account-section {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.account-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.account-section-heading h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -.02em;
+}
+
+.account-section-heading .section-kicker {
+  margin-bottom: 4px;
+}
+
+.account-section-copy {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: .8rem;
+  line-height: 1.48;
+}
+
+.inline-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.inline-form input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+}
+
+.inline-form input:focus {
+  border-color: #9ca3af;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, .07);
+}
+
+.inline-form .primary-button {
+  width: auto;
+  white-space: nowrap;
+  padding: 12px 14px;
+}
+
+.share-invite-button {
+  width: 100%;
+  margin-top: 9px;
+  padding: 11px 13px;
+  border: 1px dashed rgba(20, 125, 100, .65);
+  border-radius: 12px;
+  background: #edf8f4;
+  color: #075e4b;
+  font-weight: 850;
+}
+
+.share-invite-button:hover {
+  background: #e2f3ec;
+}
+
+.account-list {
+  display: grid;
+  gap: 8px;
+}
+
+.account-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.account-row-avatar {
+  width: 36px;
+  height: 36px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: .76rem;
+}
+
+.account-row-main {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.account-row-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .88rem;
+}
+
+.account-row-main small {
+  color: var(--muted);
+  font-size: .73rem;
+}
+
+.account-row .secondary-button {
+  width: auto;
+  padding: 8px 10px;
+  white-space: nowrap;
+  font-size: .74rem;
+}
+
+.account-row .status-pill {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.leaderboard-row.is-me {
+  border-color: rgba(20, 125, 100, .52);
+  background: #edf8f4;
+}
+
+.rank-badge {
+  width: 34px;
+  height: 34px;
+  display: grid !important;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.rank-badge.top-three {
+  background: #fff4c2;
+  color: #735c0f;
+}
+
+.leaderboard-score {
+  color: var(--text);
+  font-size: .82rem;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.account-empty {
+  padding: 16px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  text-align: center;
+  font-size: .8rem;
+}
+
+.privacy-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 13px 14px;
+  margin-top: 12px;
+  border-radius: 13px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: .76rem;
+  line-height: 1.45;
+}
+
+.privacy-note strong {
+  color: var(--text);
+}
+
+.account-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+#friendHint {
+  min-height: 1.2em;
+}
+
+@media (max-width: 520px) {
+  .account-dialog-card {
+    padding: 18px;
+  }
+
+  .account-dialog-card .dialog-header {
+    top: -18px;
+    margin: -18px -18px 0;
+    padding: 18px 18px 13px;
+  }
+
+  .profile-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .profile-score {
+    grid-column: 2;
+    justify-self: start;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 5px;
+    min-width: 0;
+    font-size: 1rem;
+  }
+
+  .profile-score::after {
+    display: inline;
+    margin: 0;
+    font-size: .65rem;
+  }
+
+  .friend-score-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-form {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-form .primary-button {
+    width: 100%;
+  }
+
+  .account-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .account-row > :last-child {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
