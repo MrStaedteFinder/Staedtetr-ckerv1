@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "staedtetracker-";
-const CACHE_NAME = `${CACHE_PREFIX}v0.15`;
+const CACHE_NAME = `${CACHE_PREFIX}v0.21`;
 const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./germany-city-coordinates.js", "./france-cities.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"];
 
 self.addEventListener("install", event => {

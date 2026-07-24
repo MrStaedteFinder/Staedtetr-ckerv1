@@ -2,7 +2,7 @@
 
 Eine installierbare Web-App zum Sammeln besuchter Städte – aktuell in Deutschland und Frankreich.
 
-## Aktueller Stand: Version 0.15
+## Aktueller Stand: Version 0.21
 
 - Deutschland-Challenge mit **237 Städten**
 - Frankreich-Challenge mit **150 Städten in 13 Regionen**
@@ -15,6 +15,8 @@ Eine installierbare Web-App zum Sammeln besuchter Städte – aktuell in Deutsch
   - alle 237 deutschen Challenge-Städte sind als Punkte sichtbar
   - weißer Punkt = offen, grüner Punkt = besucht
   - Tippen auf einen Punkt öffnet die Stadt
+- **Unterwegs:** Mit deinem Standort werden die sechs nächsten noch offenen Städte angezeigt
+- In den Städtedetails können passende Sehenswürdigkeiten und interessante Orte rund um das Stadtzentrum geladen werden
 
 ## Installation auf dem Handy
 
@@ -45,6 +47,7 @@ Die Kartenansicht braucht beim ersten Öffnen eine Internetverbindung. Die Städ
 - Deutsche Städte: Statistisches Bundesamt und GeoNames
 - Französische Städte und Koordinaten: GeoNames
 - Kartenbasis: OpenFreeMap / OpenStreetMap
+- Sehenswürdigkeiten: Wikipedia-Suche nach Kategorien (z. B. Museum, Kirche, Park)
 
 ## Projektdateien
 
@@ -55,4 +58,3 @@ Die Kartenansicht braucht beim ersten Öffnen eine Internetverbindung. Die Städ
 - `france-cities.js` – Städte für Frankreich
 - `sw.js` – Offline-Cache und Updates
 - `manifest.webmanifest` – App-Name, Icon und Installation
-

@@ -16,7 +16,7 @@
   <div class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">VERSION 0.15 · EUROPA-KARTE</p>
+        <p class="eyebrow">VERSION 0.21 · UNTERWEGS</p>
         <h1>Städtetracker</h1>
       </div>
       <div class="topbar-actions">
@@ -93,6 +93,20 @@
             </div>
           </div>
           <div id="nextCities" class="city-stack"></div>
+        </section>
+
+        <section class="section-block nearby-section">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">Unterwegs</p>
+              <h3>Städte in deiner Nähe</h3>
+            </div>
+          </div>
+          <div class="nearby-card">
+            <p id="nearbyHint" class="nearby-hint">Erlaube deinen Standort und finde offene Städte in deiner Umgebung.</p>
+            <button class="primary-button" id="nearbyLocationButton" type="button">Standort verwenden</button>
+            <div id="nearbyCities" class="city-stack nearby-cities" aria-live="polite"></div>
+          </div>
         </section>
       </section>
 
@@ -374,6 +388,18 @@
       <p class="detail-meta" id="detailMeta"></p>
 
       <div class="detail-status" id="detailStatus"></div>
+
+      <section class="sights-section" aria-labelledby="sightsTitle">
+        <div class="sights-heading">
+          <div>
+            <p class="section-kicker">Vor Ort entdecken</p>
+            <h3 id="sightsTitle">Sehenswürdigkeiten</h3>
+          </div>
+          <button type="button" class="text-button" id="loadSightsButton">Laden</button>
+        </div>
+        <p class="date-hint" id="sightsHint">Lade bis zu sechs Sehenswürdigkeiten und interessante Orte in der Nähe des Stadtzentrums.</p>
+        <div id="sightsList" class="sights-list"></div>
+      </section>
 
       <label class="date-field" for="firstVisitDate">
         <span>Erstes Besuchsdatum <small>(optional)</small></span>

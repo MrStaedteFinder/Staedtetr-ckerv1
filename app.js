@@ -51,6 +51,7 @@ const DETAILS_KEY = "staedtetracker.details.v0.8";
 const EUROPE_STORAGE_KEY = "staedtetracker.europe.visited.v0.9";
 const EUROPE_DETAILS_KEY = "staedtetracker.europe.details.v0.9";
 const STATE_COMPLETION_KEY = "staedtetracker.state-completions.v0.9";
+const LOCATION_STORAGE_KEY = "staedtetracker.last-location.v0.16";
 const MAP_BOUNDS = { minLon: 5.5, maxLon: 15.5, minLat: 47.0, maxLat: 55.2, width: 520, height: 680, pad: 14 };
 let visited = new Set([...loadVisited()].filter(id => new Set(allTrackableCities.map(city => city.id)).has(id)));
 let visitDetails = loadDetails();
@@ -63,6 +64,7 @@ let europeDetails = JSON.parse(localStorage.getItem(EUROPE_DETAILS_KEY) || "{}")
 let stateCompletionDates = JSON.parse(localStorage.getItem(STATE_COMPLETION_KEY) || "{}");
 let europeMap = null;
 let europeMapReady = false;
+let currentLocation = loadCurrentLocation();
 
 const els = {
   visitedCount: document.querySelector("#visitedCount"),
@@ -74,6 +76,9 @@ const els = {
   midSummary: document.querySelector("#midSummary"),
   stateProgressList: document.querySelector("#stateProgressList"),
   nextCities: document.querySelector("#nextCities"),
+  nearbyHint: document.querySelector("#nearbyHint"),
+  nearbyLocationButton: document.querySelector("#nearbyLocationButton"),
+  nearbyCities: document.querySelector("#nearbyCities"),
   searchInput: document.querySelector("#searchInput"),
   stateFilter: document.querySelector("#stateFilter"),
   categoryFilter: document.querySelector("#categoryFilter"),
@@ -102,6 +107,9 @@ const els = {
   detailStatus: document.querySelector("#detailStatus"),
   firstVisitDate: document.querySelector("#firstVisitDate"),
   detailVisitButton: document.querySelector("#detailVisitButton"),
+  loadSightsButton: document.querySelector("#loadSightsButton"),
+  sightsHint: document.querySelector("#sightsHint"),
+  sightsList: document.querySelector("#sightsList"),
   badgeDialog: document.querySelector("#badgeDialog"),
   badgeDetailIcon: document.querySelector("#badgeDetailIcon"),
   badgeDetailTitle: document.querySelector("#badgeDetailTitle"),
@@ -230,6 +238,76 @@ function formatDate(value) {
   const [year, month, day] = value.split("-").map(Number);
   if (!year || !month || !day) return value;
   return new Intl.DateTimeFormat("de-DE").format(new Date(year, month - 1, day));
+}
+
+function loadCurrentLocation() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(LOCATION_STORAGE_KEY) || "null");
+    return Number.isFinite(stored?.lat) && Number.isFinite(stored?.lng) ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+function distanceInKm(from, city) {
+  const radians = degree => degree * Math.PI / 180;
+  const earthRadius = 6371;
+  const deltaLat = radians(city.lat - from.lat);
+  const deltaLng = radians(city.lng - from.lng);
+  const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(radians(from.lat)) * Math.cos(radians(city.lat)) * Math.sin(deltaLng / 2) ** 2;
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function renderNearbyCities() {
+  if (!els.nearbyHint) return;
+  if (!currentLocation) {
+    els.nearbyHint.textContent = "Erlaube deinen Standort und finde offene Städte in deiner Umgebung.";
+    els.nearbyLocationButton.textContent = "Standort verwenden";
+    els.nearbyLocationButton.disabled = false;
+    els.nearbyCities.innerHTML = "";
+    return;
+  }
+
+  const nearby = cities
+    .filter(city => !visited.has(city.id) && Number.isFinite(city.lat) && Number.isFinite(city.lng))
+    .map(city => ({ city, distance: distanceInKm(currentLocation, city) }))
+    .sort((a, b) => a.distance - b.distance || b.city.population - a.city.population)
+    .slice(0, 6);
+
+  els.nearbyHint.textContent = nearby.length
+    ? `Die nächsten offenen Städte in ${COUNTRY_CONFIG[activeCountry].name}.`
+    : `Alle Städte in ${COUNTRY_CONFIG[activeCountry].name} sind bereits besucht.`;
+  els.nearbyLocationButton.textContent = "Standort aktualisieren";
+  els.nearbyLocationButton.disabled = false;
+  els.nearbyCities.innerHTML = nearby.map(({ city, distance }) => `
+    <article class="mini-city">
+      <button class="mini-city-main" data-city-detail="${city.id}">
+        <strong>${city.name}</strong>
+        <small><span class="nearby-distance">${distance < 10 ? distance.toFixed(1) : Math.round(distance)} km</span> · ${city.state}</small>
+      </button>
+      <button class="quick-check" data-toggle="${city.id}" aria-label="${city.name} als besucht markieren">✓</button>
+    </article>`).join("");
+}
+
+function requestCurrentLocation() {
+  if (!navigator.geolocation) {
+    els.nearbyHint.textContent = "Dein Browser unterstützt leider keinen Standortzugriff.";
+    return;
+  }
+  els.nearbyLocationButton.disabled = true;
+  els.nearbyLocationButton.textContent = "Standort wird gesucht …";
+  navigator.geolocation.getCurrentPosition(position => {
+    currentLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+    localStorage.setItem(LOCATION_STORAGE_KEY, JSON.stringify(currentLocation));
+    renderNearbyCities();
+  }, error => {
+    const message = error.code === error.PERMISSION_DENIED
+      ? "Standortzugriff wurde nicht erlaubt. Du kannst ihn in den Browser-Einstellungen aktivieren."
+      : "Dein Standort konnte gerade nicht bestimmt werden. Versuch es bitte noch einmal.";
+    els.nearbyHint.textContent = message;
+    els.nearbyLocationButton.disabled = false;
+    els.nearbyLocationButton.textContent = "Standort verwenden";
+  }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 });
 }
 
 function stateStats() {
@@ -863,12 +941,88 @@ function initEuropeMap() {
   }
 }
 
-function renderAll() { updateStateCompletionDates(); renderOverview(); renderCities(); renderEurope(); renderStats(); updateMapCityPoints(); }
+function renderAll() { updateStateCompletionDates(); renderOverview(); renderNearbyCities(); renderCities(); renderEurope(); renderStats(); updateMapCityPoints(); }
 
 function populateStateFilter() {
   const states=[...new Set(cities.map(city=>city.state))].sort((a,b)=>a.localeCompare(b,"de"));
   els.stateFilter.value = "all";
   els.stateFilter.innerHTML = `<option value="all">${COUNTRY_CONFIG[activeCountry].regions === "Bundesländer" ? "Alle Bundesländer" : "Alle Regionen"}</option>` + states.map(state=>`<option value="${state}">${state}</option>`).join("");
+}
+
+function resetSights(city) {
+  if (!els.loadSightsButton) return;
+  els.loadSightsButton.disabled = false;
+  els.loadSightsButton.textContent = "Laden";
+  els.sightsHint.textContent = `Museen, Kirchen, Parks und weitere Orte für ${city.name} laden.`;
+  els.sightsList.innerHTML = "";
+}
+
+async function loadCitySights() {
+  const city = cities.find(item => item.id === activeDetailCityId);
+  if (!city) return;
+  els.loadSightsButton.disabled = true;
+  els.loadSightsButton.textContent = "Lädt …";
+  els.sightsHint.textContent = "Sehenswürdigkeiten werden gesucht …";
+  els.sightsList.innerHTML = "";
+  try {
+    const isGerman = activeCountry === "de";
+    const wikiApi = isGerman ? "https://de.wikipedia.org/w/api.php" : "https://fr.wikipedia.org/w/api.php";
+    const categories = isGerman
+      ? [
+          { type: "Museum", term: "Museum" },
+          { type: "Museum", term: "Kunstmuseum" },
+          { type: "Kirche", term: "Kirche" },
+          { type: "Park", term: "Park" },
+          { type: "Schloss oder Burg", term: "Schloss" },
+          { type: "Denkmal", term: "Denkmal" }
+        ]
+      : [
+          { type: "Museum", term: "musée" },
+          { type: "Museum", term: "musée d’art" },
+          { type: "Kirche", term: "église" },
+          { type: "Park", term: "parc" },
+          { type: "Schloss oder Burg", term: "château" },
+          { type: "Denkmal", term: "monument" }
+        ];
+    const searches = await Promise.allSettled(categories.map(async category => {
+      const params = new URLSearchParams({
+        origin: "*", action: "query", format: "json", list: "search", srlimit: "5",
+        srsearch: `${category.term} ${city.name}`
+      });
+      const response = await fetch(`${wikiApi}?${params}`);
+      if (!response.ok) throw new Error("Wikipedia-Suche fehlgeschlagen");
+      const data = await response.json();
+      return { category, results: data.query?.search || [] };
+    }));
+    if (searches.every(result => result.status === "rejected")) throw new Error("Alle Suchen fehlgeschlagen");
+    const seen = new Set();
+    const sights = [];
+    searches.forEach(search => {
+      if (search.status !== "fulfilled") return;
+      const { category, results } = search.value;
+      const result = results.find(item => {
+        const title = item.title.toLocaleLowerCase("de");
+        return title !== city.name.toLocaleLowerCase("de") && !seen.has(title);
+      });
+      if (!result) return;
+      seen.add(result.title.toLocaleLowerCase("de"));
+      sights.push({ name: result.title, type: category.type });
+    });
+    els.sightsHint.textContent = sights.length
+      ? `${sights.length} gemischte Vorschläge für ${city.name}.`
+      : `Gerade keine passenden Vorschläge für ${city.name} gefunden.`;
+    els.sightsList.innerHTML = sights.map(sight => `
+      <article class="sight-row">
+        <span class="sight-symbol" aria-hidden="true">★</span>
+        <span class="sight-copy"><strong>${escapeHtml(sight.name)}</strong><small>${sight.type}</small></span>
+      </article>`).join("");
+  } catch (error) {
+    console.error("Sehenswürdigkeiten konnten nicht geladen werden", error);
+    els.sightsHint.textContent = "Die Sehenswürdigkeiten konnten gerade nicht geladen werden. Prüfe deine Internetverbindung und versuche es später erneut.";
+  } finally {
+    els.loadSightsButton.disabled = false;
+    els.loadSightsButton.textContent = "Neu laden";
+  }
 }
 
 function openCityDetail(id) {
@@ -884,6 +1038,7 @@ function openCityDetail(id) {
   els.firstVisitDate.disabled=!isVisited;
   els.detailVisitButton.textContent=isVisited ? "Als nicht besucht markieren" : "Als besucht markieren";
   els.detailVisitButton.classList.toggle("danger-button",isVisited);
+  resetSights(city);
   els.cityDialog.showModal();
 }
 
@@ -1005,6 +1160,8 @@ document.querySelectorAll(".segment").forEach(button=>button.addEventListener("c
 document.querySelector("#rulesButton").addEventListener("click",()=>els.rulesDialog.showModal());
 document.querySelector("#closeCityDialog").addEventListener("click",closeCityDetail);
 document.querySelector("#closeBadgeDialog").addEventListener("click",closeBadgeDetail);
+els.nearbyLocationButton.addEventListener("click", requestCurrentLocation);
+els.loadSightsButton.addEventListener("click", loadCitySights);
 els.countryPickerButton.addEventListener("click", () => els.countryDialog.showModal());
 els.closeCountryDialog.addEventListener("click", () => els.countryDialog.close());
 document.querySelectorAll("[data-country]").forEach(button => button.addEventListener("click", () => {

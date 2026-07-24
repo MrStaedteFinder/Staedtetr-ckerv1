@@ -1178,6 +1178,37 @@ dialog::backdrop { background: rgba(17,24,39,.48); backdrop-filter: blur(4px); }
 /* Version 0.14 – Europa-Karte */
 .bottom-nav { grid-template-columns: repeat(5, 1fr); }
 
+/* Version 0.16 – Städte in deiner Nähe */
+.nearby-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.nearby-card .primary-button { margin-top: 4px; }
+.nearby-hint { margin: 0 0 13px; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+.nearby-cities { margin-top: 14px; }
+.nearby-distance { color: var(--success); font-weight: 800; }
+
+.sights-section {
+  margin: 2px 0 18px;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-soft);
+}
+
+.sights-heading { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.sights-heading h3 { margin-bottom: 0; font-size: 1rem; }
+.sights-heading .text-button { flex: 0 0 auto; }
+.sights-list { display: grid; gap: 7px; margin-top: 10px; }
+.sight-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: var(--surface); }
+.sight-symbol { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; background: #edf8f4; color: var(--success); font-size: .82rem; font-weight: 900; }
+.sight-copy { min-width: 0; display: grid; gap: 2px; }
+.sight-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .88rem; }
+.sight-copy small { color: var(--muted); font-size: .75rem; }
+
 /* Freunde-Menü – überarbeitete Profil-, Einladungs- und Ranglistenansicht */
 .account-dialog {
   width: min(calc(100% - 24px), 640px);
@@ -1551,4 +1582,3 @@ dialog::backdrop { background: rgba(17,24,39,.48); backdrop-filter: blur(4px); }
     justify-self: start;
   }
 }
-
